@@ -129,6 +129,9 @@ typedef uint8_t sm_key_t[16];
 // Mesh Network PDU
 #define MESH_BEACON_PACKET       0x13u
 
+// OPP data
+#define OPP_DATA_PACKET          0x14u
+
 // debug log messages
 #define LOG_MESSAGE_PACKET      0xfcu
 

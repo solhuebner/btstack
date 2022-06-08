@@ -188,6 +188,14 @@ static inline uint8_t hci_event_mesh_meta_get_subevent_code(const uint8_t * even
 static inline uint8_t hci_event_pbap_meta_get_subevent_code(const uint8_t * event){
     return event[2];
 }
+/***
+ * @brief Get subevent code for opp event
+ * @param event packet
+ * @return subevent_code
+ */
+static inline uint8_t hci_event_opp_meta_get_subevent_code(const uint8_t * event){
+    return event[2];
+}
 /**
  * @brief Get field status from event HCI_EVENT_INQUIRY_COMPLETE
  * @param event packet
@@ -11625,6 +11633,81 @@ static inline uint8_t pbap_subevent_pull_vcard_entry_get_phonebook(const uint8_t
  */
 static inline const char * pbap_subevent_pull_vcard_entry_get_name(const uint8_t * event){
     return (const char *) &event[15];
+}
+
+/**
+ * @brief Get field pbap_cid from event OPP_SUBEVENT_CONNECTION_OPENED
+ * @param event packet
+ * @return opp_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t opp_subevent_connection_opened_get_opp_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field status from event OPP_SUBEVENT_CONNECTION_OPENED
+ * @param event packet
+ * @return status
+ * @note: btstack_type 1
+ */
+static inline uint8_t opp_subevent_connection_opened_get_status(const uint8_t * event){
+    return event[5];
+}
+/**
+ * @brief Get field bd_addr from event OPP_SUBEVENT_CONNECTION_OPENED
+ * @param event packet
+ * @param Pointer to storage for bd_addr
+ * @note: btstack_type B
+ */
+static inline void opp_subevent_connection_opened_get_bd_addr(const uint8_t * event, bd_addr_t bd_addr){
+    reverse_bytes(&event[6], bd_addr, 6);
+}
+/**
+ * @brief Get field con_handle from event OPP_SUBEVENT_CONNECTION_OPENED
+ * @param event packet
+ * @return con_handle
+ * @note: btstack_type H
+ */
+static inline hci_con_handle_t opp_subevent_connection_opened_get_con_handle(const uint8_t * event){
+    return little_endian_read_16(event, 12);
+}
+/**
+ * @brief Get field incoming from event OPP_SUBEVENT_CONNECTION_OPENED
+ * @param event packet
+ * @return incoming
+ * @note: btstack_type 1
+ */
+static inline uint8_t opp_subevent_connection_opened_get_incoming(const uint8_t * event){
+    return event[14];
+}
+
+/**
+ * @brief Get field goep_cid from event OPP_SUBEVENT_CONNECTION_CLOSED
+ * @param event packet
+ * @return goep_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t opp_subevent_connection_closed_get_goep_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+
+/**
+ * @brief Get field goep_cid from event OPP_SUBEVENT_OPERATION_COMPLETED
+ * @param event packet
+ * @return goep_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t opp_subevent_operation_completed_get_goep_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field status from event OPP_SUBEVENT_OPERATION_COMPLETED
+ * @param event packet
+ * @return status
+ * @note: btstack_type 1
+ */
+static inline uint8_t opp_subevent_operation_completed_get_status(const uint8_t * event){
+    return event[5];
 }
 
 /**

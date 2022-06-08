@@ -1,0 +1,11 @@
+Struct der beim create connection mitgegeben wird für den kompletten State
+  wird in liste vorgehalten zum Wiederfinden anhand der Verbindung
+
+
+  ...goep_client_connect()
+
+  UUID 
+
+  MAP muss viele Daten schicken
+  * Event schicken, Application füllt Paket und gibt mit "continuation"-Zähler
+
