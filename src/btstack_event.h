@@ -11692,6 +11692,26 @@ static inline uint16_t opp_subevent_connection_closed_get_goep_cid(const uint8_t
 }
 
 /**
+ * @brief Get field goep_cid from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @param event packet
+ * @return goep_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t opp_subevent_push_object_data_get_goep_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+
+/**
+ * @brief Get field cur_position from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @param event packet
+ * @return cur_position
+ * @note: btstack_type 2
+ */
+static inline uint32_t opp_subevent_push_object_data_get_cur_position(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+
+/**
  * @brief Get field goep_cid from event OPP_SUBEVENT_OPERATION_COMPLETED
  * @param event packet
  * @return goep_cid

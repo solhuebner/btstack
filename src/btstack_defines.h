@@ -3644,12 +3644,20 @@ typedef uint8_t sm_key_t[16];
 #define OPP_SUBEVENT_CONNECTION_CLOSED                                     0x02u
 
 /**
+ * @format 124
+ * @param subevent_code
+ * @param goep_cid
+ * @param cur_position
+ */
+#define OPP_SUBEVENT_PUSH_OBJECT_DATA                                      0x03u
+
+/**
  * @format 121
  * @param subevent_code
  * @param goep_cid
  * @param status
  */
-#define OPP_SUBEVENT_OPERATION_COMPLETED                                   0x03u
+#define OPP_SUBEVENT_OPERATION_COMPLETED                                   0x04u
 
 
 // HID Meta Event Group
