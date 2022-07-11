@@ -3644,10 +3644,11 @@ typedef uint8_t sm_key_t[16];
 #define OPP_SUBEVENT_CONNECTION_CLOSED                                     0x02u
 
 /**
- * @format 124
+ * @format 1242
  * @param subevent_code
  * @param goep_cid
  * @param cur_position
+ * @param buf_size
  */
 #define OPP_SUBEVENT_PUSH_OBJECT_DATA                                      0x03u
 

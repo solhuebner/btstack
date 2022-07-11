@@ -11712,6 +11712,16 @@ static inline uint32_t opp_subevent_push_object_data_get_cur_position(const uint
 }
 
 /**
+ * @brief Get field bufsize from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @param event packet
+ * @return bufsize
+ * @note: btstack_type 2
+ */
+static inline uint16_t opp_subevent_push_object_data_get_buf_size(const uint8_t * event){
+    return little_endian_read_16(event, 9);
+}
+
+/**
  * @brief Get field goep_cid from event OPP_SUBEVENT_OPERATION_COMPLETED
  * @param event packet
  * @return goep_cid
