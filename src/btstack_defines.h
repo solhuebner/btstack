@@ -3659,7 +3659,7 @@ typedef uint8_t sm_key_t[16];
  * @param cur_position
  * @param buf_size
  */
-#define OPP_SUBEVENT_PULL_OBJECT_DATA                                      0x04u
+#define OPP_SUBEVENT_PULL_DEFAULT_OBJECT                                   0x04u
 
 /**
  * @format 121
