@@ -3628,7 +3628,7 @@ typedef uint8_t sm_key_t[16];
 /**
  * @format 121BH1
  * @param subevent_code
- * @param pbap_cid
+ * @param opp_cid
  * @param status
  * @param bd_addr
  * @param con_handle
@@ -3639,14 +3639,14 @@ typedef uint8_t sm_key_t[16];
 /**
  * @format 12
  * @param subevent_code
- * @param goep_cid
+ * @param opp_cid
 */
 #define OPP_SUBEVENT_CONNECTION_CLOSED                                     0x02u
 
 /**
  * @format 1242
  * @param subevent_code
- * @param goep_cid
+ * @param opp_cid
  * @param cur_position
  * @param buf_size
  */
@@ -3655,7 +3655,7 @@ typedef uint8_t sm_key_t[16];
 /**
  * @format 1242
  * @param subevent_code
- * @param goep_cid
+ * @param opp_cid
  * @param cur_position
  * @param buf_size
  */
@@ -3664,7 +3664,7 @@ typedef uint8_t sm_key_t[16];
 /**
  * @format 121
  * @param subevent_code
- * @param goep_cid
+ * @param opp_cid
  * @param status
  */
 #define OPP_SUBEVENT_OPERATION_COMPLETED                                   0x05u
