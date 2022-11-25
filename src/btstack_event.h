@@ -11722,6 +11722,16 @@ static inline uint16_t opp_subevent_push_object_data_get_buf_size(const uint8_t 
 }
 
 /**
+ * @brief Get field object_length from event OPP_SUBEVENT_PUSH_OBJECT
+ * @param event packet
+ * @return object_length
+ * @note: btstack_type 4
+ */
+static inline uint32_t opp_subevent_push_object_get_object_length(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+
+/**
  * @brief Get field goep_cid from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
  * @param event packet
  * @return goep_cid

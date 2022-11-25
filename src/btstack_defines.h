@@ -3653,9 +3653,10 @@ typedef uint8_t sm_key_t[16];
 #define OPP_SUBEVENT_PUSH_OBJECT_DATA                                      0x03u
 
 /**
- * @format 12JVJV
+ * @format 124JVJV
  * @param subevent_code
  * @param opp_cid
+ * @param object_size
  * @param name_len
  * @param name
  * @param type_len
