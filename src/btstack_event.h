@@ -11636,7 +11636,7 @@ static inline const char * pbap_subevent_pull_vcard_entry_get_name(const uint8_t
 }
 
 /**
- * @brief Get field pbap_cid from event OPP_SUBEVENT_CONNECTION_OPENED
+ * @brief Get field opp_cid from event OPP_SUBEVENT_CONNECTION_OPENED
  * @param event packet
  * @return opp_cid
  * @note: btstack_type 2
@@ -11682,39 +11682,37 @@ static inline uint8_t opp_subevent_connection_opened_get_incoming(const uint8_t 
 }
 
 /**
- * @brief Get field goep_cid from event OPP_SUBEVENT_CONNECTION_CLOSED
+ * @brief Get field opp_cid from event OPP_SUBEVENT_CONNECTION_CLOSED
  * @param event packet
- * @return goep_cid
+ * @return opp_cid
  * @note: btstack_type 2
  */
-static inline uint16_t opp_subevent_connection_closed_get_goep_cid(const uint8_t * event){
+static inline uint16_t opp_subevent_connection_closed_get_opp_cid(const uint8_t * event){
     return little_endian_read_16(event, 3);
 }
 
 /**
- * @brief Get field goep_cid from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @brief Get field opp_cid from event OPP_SUBEVENT_PUSH_OBJECT_DATA
  * @param event packet
- * @return goep_cid
+ * @return opp_cid
  * @note: btstack_type 2
  */
-static inline uint16_t opp_subevent_push_object_data_get_goep_cid(const uint8_t * event){
+static inline uint16_t opp_subevent_push_object_data_get_opp_cid(const uint8_t * event){
     return little_endian_read_16(event, 3);
 }
-
 /**
  * @brief Get field cur_position from event OPP_SUBEVENT_PUSH_OBJECT_DATA
  * @param event packet
  * @return cur_position
- * @note: btstack_type 2
+ * @note: btstack_type 4
  */
 static inline uint32_t opp_subevent_push_object_data_get_cur_position(const uint8_t * event){
     return little_endian_read_32(event, 5);
 }
-
 /**
- * @brief Get field bufsize from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @brief Get field buf_size from event OPP_SUBEVENT_PUSH_OBJECT_DATA
  * @param event packet
- * @return bufsize
+ * @return buf_size
  * @note: btstack_type 2
  */
 static inline uint16_t opp_subevent_push_object_data_get_buf_size(const uint8_t * event){
@@ -11722,39 +11720,82 @@ static inline uint16_t opp_subevent_push_object_data_get_buf_size(const uint8_t 
 }
 
 /**
- * @brief Get field object_length from event OPP_SUBEVENT_PUSH_OBJECT
+ * @brief Get field opp_cid from event OPP_SUBEVENT_PUSH_OBJECT
  * @param event packet
- * @return object_length
+ * @return opp_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t opp_subevent_push_object_get_opp_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field object_size from event OPP_SUBEVENT_PUSH_OBJECT
+ * @param event packet
+ * @return object_size
  * @note: btstack_type 4
  */
-static inline uint32_t opp_subevent_push_object_get_object_length(const uint8_t * event){
+static inline uint32_t opp_subevent_push_object_get_object_size(const uint8_t * event){
     return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field name_len from event OPP_SUBEVENT_PUSH_OBJECT
+ * @param event packet
+ * @return name_len
+ * @note: btstack_type J
+ */
+static inline uint8_t opp_subevent_push_object_get_name_len(const uint8_t * event){
+    return event[9];
+}
+/**
+ * @brief Get field name from event OPP_SUBEVENT_PUSH_OBJECT
+ * @param event packet
+ * @return name
+ * @note: btstack_type V
+ */
+static inline const uint8_t * opp_subevent_push_object_get_name(const uint8_t * event){
+    return &event[10];
+}
+/**
+ * @brief Get field type_len from event OPP_SUBEVENT_PUSH_OBJECT
+ * @param event packet
+ * @return type_len
+ * @note: btstack_type J
+ */
+static inline uint8_t opp_subevent_push_object_get_type_len(const uint8_t * event){
+    return event[10u + event[9]];
+}
+/**
+ * @brief Get field type from event OPP_SUBEVENT_PUSH_OBJECT
+ * @param event packet
+ * @return type
+ * @note: btstack_type V
+ */
+static inline const uint8_t * opp_subevent_push_object_get_type(const uint8_t * event){
+    return &event[10u + event[9] + 1u];
 }
 
 /**
- * @brief Get field goep_cid from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
+ * @brief Get field opp_cid from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
  * @param event packet
- * @return goep_cid
+ * @return opp_cid
  * @note: btstack_type 2
  */
-static inline uint16_t opp_subevent_pull_default_object_get_goep_cid(const uint8_t * event){
+static inline uint16_t opp_subevent_pull_default_object_get_opp_cid(const uint8_t * event){
     return little_endian_read_16(event, 3);
 }
-
 /**
  * @brief Get field cur_position from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
  * @param event packet
  * @return cur_position
- * @note: btstack_type 2
+ * @note: btstack_type 4
  */
 static inline uint32_t opp_subevent_pull_default_object_get_cur_position(const uint8_t * event){
     return little_endian_read_32(event, 5);
 }
-
 /**
- * @brief Get field bufsize from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
+ * @brief Get field buf_size from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
  * @param event packet
- * @return bufsize
+ * @return buf_size
  * @note: btstack_type 2
  */
 static inline uint16_t opp_subevent_pull_default_object_get_buf_size(const uint8_t * event){
@@ -11762,12 +11803,12 @@ static inline uint16_t opp_subevent_pull_default_object_get_buf_size(const uint8
 }
 
 /**
- * @brief Get field goep_cid from event OPP_SUBEVENT_OPERATION_COMPLETED
+ * @brief Get field opp_cid from event OPP_SUBEVENT_OPERATION_COMPLETED
  * @param event packet
- * @return goep_cid
+ * @return opp_cid
  * @note: btstack_type 2
  */
-static inline uint16_t opp_subevent_operation_completed_get_goep_cid(const uint8_t * event){
+static inline uint16_t opp_subevent_operation_completed_get_opp_cid(const uint8_t * event){
     return little_endian_read_16(event, 3);
 }
 /**
