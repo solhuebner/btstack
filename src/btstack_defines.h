@@ -3647,8 +3647,8 @@ typedef uint8_t sm_key_t[16];
  * @format 1242
  * @param subevent_code
  * @param opp_cid
- * @param cur_position
- * @param buf_size
+ * @param position
+ * @param buffer_size
  */
 #define OPP_SUBEVENT_PUSH_OBJECT_DATA                                      0x03u
 
@@ -3668,8 +3668,8 @@ typedef uint8_t sm_key_t[16];
  * @format 1242
  * @param subevent_code
  * @param opp_cid
- * @param cur_position
- * @param buf_size
+ * @param position
+ * @param buffer_size
  */
 #define OPP_SUBEVENT_PULL_DEFAULT_OBJECT                                   0x05u
 

@@ -11701,21 +11701,21 @@ static inline uint16_t opp_subevent_push_object_data_get_opp_cid(const uint8_t *
     return little_endian_read_16(event, 3);
 }
 /**
- * @brief Get field cur_position from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @brief Get field position from event OPP_SUBEVENT_PUSH_OBJECT_DATA
  * @param event packet
- * @return cur_position
+ * @return position
  * @note: btstack_type 4
  */
-static inline uint32_t opp_subevent_push_object_data_get_cur_position(const uint8_t * event){
+static inline uint32_t opp_subevent_push_object_data_get_position(const uint8_t * event){
     return little_endian_read_32(event, 5);
 }
 /**
- * @brief Get field buf_size from event OPP_SUBEVENT_PUSH_OBJECT_DATA
+ * @brief Get field buffer_size from event OPP_SUBEVENT_PUSH_OBJECT_DATA
  * @param event packet
- * @return buf_size
+ * @return buffer_size
  * @note: btstack_type 2
  */
-static inline uint16_t opp_subevent_push_object_data_get_buf_size(const uint8_t * event){
+static inline uint16_t opp_subevent_push_object_data_get_buffer_size(const uint8_t * event){
     return little_endian_read_16(event, 9);
 }
 
@@ -11784,21 +11784,21 @@ static inline uint16_t opp_subevent_pull_default_object_get_opp_cid(const uint8_
     return little_endian_read_16(event, 3);
 }
 /**
- * @brief Get field cur_position from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
+ * @brief Get field position from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
  * @param event packet
- * @return cur_position
+ * @return position
  * @note: btstack_type 4
  */
-static inline uint32_t opp_subevent_pull_default_object_get_cur_position(const uint8_t * event){
+static inline uint32_t opp_subevent_pull_default_object_get_position(const uint8_t * event){
     return little_endian_read_32(event, 5);
 }
 /**
- * @brief Get field buf_size from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
+ * @brief Get field buffer_size from event OPP_SUBEVENT_PULL_DEFAULT_OBJECT
  * @param event packet
- * @return buf_size
+ * @return buffer_size
  * @note: btstack_type 2
  */
-static inline uint16_t opp_subevent_pull_default_object_get_buf_size(const uint8_t * event){
+static inline uint16_t opp_subevent_pull_default_object_get_buffer_size(const uint8_t * event){
     return little_endian_read_16(event, 9);
 }
 
