@@ -138,6 +138,9 @@ typedef uint8_t sm_key_t[16];
 // Mesh Network PDU
 #define MESH_BEACON_PACKET       0x14u
 
+// OPP data
+#define OPP_DATA_PACKET          0x14u
+
 // debug log messages
 #define LOG_MESSAGE_PACKET      0xfcu
 
@@ -1947,6 +1950,7 @@ typedef uint8_t sm_key_t[16];
 #define HCI_EVENT_MAP_META                                       0xF4u
 #define HCI_EVENT_MESH_META                                      0xF5u
 #define HCI_EVENT_LEAUDIO_META                                   0xF6u
+#define HCI_EVENT_OPP_META                                       0xF7u
 
 // Potential other meta groups
 // #define HCI_EVENT_BNEP_META                                0xxx
@@ -3819,6 +3823,65 @@ typedef uint8_t sm_key_t[16];
 #define PBAP_SUBEVENT_PULL_VCARD_ENTRY                                     0x0Eu
 
 
+// OPP Meta Event Group
+
+/**
+ * @format 121BH1
+ * @param subevent_code
+ * @param opp_cid
+ * @param status
+ * @param bd_addr
+ * @param con_handle
+ * @param incoming
+ */
+#define OPP_SUBEVENT_CONNECTION_OPENED                                     0x01u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param opp_cid
+*/
+#define OPP_SUBEVENT_CONNECTION_CLOSED                                     0x02u
+
+/**
+ * @format 1242
+ * @param subevent_code
+ * @param opp_cid
+ * @param position
+ * @param buffer_size
+ */
+#define OPP_SUBEVENT_PUSH_OBJECT_DATA                                      0x03u
+
+/**
+ * @format 124JVJV
+ * @param subevent_code
+ * @param opp_cid
+ * @param object_size
+ * @param name_len
+ * @param name
+ * @param type_len
+ * @param type
+ */
+#define OPP_SUBEVENT_PUSH_OBJECT                                           0x04u
+
+/**
+ * @format 1242
+ * @param subevent_code
+ * @param opp_cid
+ * @param position
+ * @param buffer_size
+ */
+#define OPP_SUBEVENT_PULL_DEFAULT_OBJECT                                   0x05u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param opp_cid
+ * @param status
+ */
+#define OPP_SUBEVENT_OPERATION_COMPLETED                                   0x06u
+
+
 // HID Meta Event Group
 
 /**
@@ -4448,7 +4511,6 @@ typedef uint8_t sm_key_t[16];
 #define GATTSERVICE_SUBEVENT_IAS_SERVER_STOP_ALERTING                        0x31u
 
 
-
 // LE Audio
 
 /**
@@ -4542,7 +4604,7 @@ typedef uint8_t sm_key_t[16];
 #define LEAUDIO_SUBEVENT_BASS_CLIENT_SCAN_OPERATION_COMPLETE                   0x0Bu
 
 /**
- * @format 1211B1311P1
+ * @format 1211B1311K1
  * @param subevent_code
  * @param bass_cid
  * @param source_id
@@ -4601,6 +4663,1853 @@ typedef uint8_t sm_key_t[16];
 */
 #define LEAUDIO_SUBEVENT_BASS_CLIENT_SOURCE_OPERATION_COMPLETE                     0x0Fu
 
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_CONNECTED                              0x10u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_DISCONNECTED                           0x11u
+
+/**
+ * @format 1H111122111421
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+ * @param target_latency
+ * @param target_phy
+ * @param coding_format
+ * @param company_id
+ * @param vendor_specific_codec_id
+ * @param specific_codec_configuration_mask
+ * @param sampling_frequency_index
+ * @param frame_duration_index
+ * @param audio_channel_allocation_mask
+ * @param octets_per_frame 
+ * @param frame_blocks_per_sdu 
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_CODEC_CONFIGURATION                      0x12u
+
+
+/**
+ * @format 1H1113112123
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+ * @param cig_id
+ * @param cis_id
+ * @param sdu_interval
+ * @param framing
+ * @param phy
+ * @param max_sdu
+ * @param retransmission_number
+ * @param max_transport_latency
+ * @param presentation_delay_us
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_QOS_CONFIGURATION                         0x13u
+
+/**
+ * @format 1H1122JV3JV1JV2JV2JV
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+ * @param metadata_mask
+ * @param preferred_audio_contexts_mask
+ * @param streaming_audio_contexts_mask
+ * @param program_info_length
+ * @param program_info
+ * @param language_code
+ * @param ccids_num
+ * @param ccids
+ * @param parental_rating
+ * @param program_info_uri_length
+ * @param program_info_uri
+ * @param extended_metadata_type
+ * @param extended_metadata_value_length
+ * @param extended_metadata_value
+ * @param vendor_specific_metadata_type
+ * @param vendor_specific_metadata_value_length
+ * @param vendor_specific_metadata_value
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_METADATA                                    0x14u
+
+
+// used by server to emit control point operation operation
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+*/ 
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_START_READY                                 0x15u
+
+/**
+ * @format 121122JV3JV1JV2JV2JV
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+ * @param metadata_mask
+ * @param preferred_audio_contexts_mask
+ * @param streaming_audio_contexts_mask
+ * @param program_info_length
+ * @param program_info
+ * @param language_code
+ * @param ccids_num
+ * @param ccids
+ * @param parental_rating
+ * @param program_info_uri_length
+ * @param program_info_uri
+ * @param extended_metadata_type
+ * @param extended_metadata_value_length
+ * @param extended_metadata_value
+ * @param vendor_specific_metadata_type
+ * @param vendor_specific_metadata_value_length
+ * @param vendor_specific_metadata_value
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_ENABLE                                       0x16u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+*/ 
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_DISABLE                                      0x17u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+*/ 
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_RELEASE                                      0x18u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+*/ 
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_STOP_READY                                   0x19u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+*/
+#define LEAUDIO_SUBEVENT_ASCS_SERVER_RELEASED                                     0x1Au
+
+/**
+ * @format 1H21JVJV
+ * @param subevent_code
+ * @param con_handle
+ * @param ascs_cid
+ * @param status
+ * @param sink_ase_num
+ * @param sink_ase_ids
+ * @param source_ase_num
+ * @param source_ase_ids 
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_CONNECTED                                    0x1Bu
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param ascs_cid
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_DISCONNECTED                                 0x1Cu
+
+/**
+ * @format 12111123333122111421
+ * @param subevent_code
+ * @param ascs_cid
+ * @param ase_id
+ * @param framing
+ * @param preferred_phy
+ * @param preferred_retransmission_number
+ * @param max_transport_latency
+ * @param presentation_delay_min
+ * @param presentation_delay_max
+ * @param preferred_presentation_delay_min
+ * @param preferred_presentation_delay_max
+ * @param coding_format
+ * @param company_id
+ * @param vendor_specific_codec_id
+ * @param specific_codec_configuration_mask
+ * @param sampling_frequency_index
+ * @param frame_duration_index
+ * @param audio_channel_allocation_mask
+ * @param octets_per_frame 
+ * @param frame_blocks_per_sdu 
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_CODEC_CONFIGURATION                          0x1Du
+
+/**
+ * @format 121113112123
+ * @param subevent_code
+ * @param ascs_cid
+ * @param ase_id
+ * @param cig_id
+ * @param cis_id
+ * @param sdu_interval
+ * @param framing
+ * @param phy
+ * @param max_sdu
+ * @param retransmission_number
+ * @param max_transport_latency
+ * @param presentation_delay_us
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_QOS_CONFIGURATION                             0x1Eu
+
+/**
+ * @format 121122JV3JV1JV2JV2JV
+ * @param subevent_code
+ * @param ascs_cid
+ * @param ase_id
+ * @param metadata_mask
+ * @param preferred_audio_contexts_mask
+ * @param streaming_audio_contexts_mask
+ * @param program_info_length
+ * @param program_info
+ * @param language_code
+ * @param ccids_num
+ * @param ccids
+ * @param parental_rating
+ * @param program_info_uri_length
+ * @param program_info_uri
+ * @param extended_metadata_type
+ * @param extended_metadata_value_length
+ * @param extended_metadata_value
+ * @param vendor_specific_metadata_type
+ * @param vendor_specific_metadata_value_length
+ * @param vendor_specific_metadata_value
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_METADATA                                       0x1Fu
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param ascs_cid
+ * @param ase_id
+ * @param state
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_STREAMENDPOINT_STATE                            0x20u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param ase_id
+*/
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_ENABLE                                          0x21u
+
+/**
+ * @format 121111
+ * @param subevent_code
+ * @param ascs_cid
+ * @param opcode
+ * @param ase_id
+ * @param response_code
+ * @param reason
+*/ 
+#define LEAUDIO_SUBEVENT_ASCS_CLIENT_CONTROL_POINT_OPERATION_RESPONSE                 0x22u
+
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_PACS_SERVER_CONNECTED                                        0x23u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_PACS_SERVER_DISCONNECTED                                     0x24u
+
+/**
+ * @format 1H41
+ * @param subevent_code
+ * @param con_handle
+ * @param audio_locations
+ * @param role              see le_audio_role_t
+*/
+#define LEAUDIO_SUBEVENT_PACS_SERVER_AUDIO_LOCATIONS                                  0x25u
+
+/**
+ * @format 1H21
+ * @param subevent_code
+ * @param con_handle
+ * @param pacs_cid
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_CONNECTED                                        0x26u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param pacs_cid
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_DISCONNECTED                                     0x27u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param pacs_cid
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_OPERATION_DONE                                   0x28u
+
+/**
+ * @format 12114
+ * @param subevent_code
+ * @param pacs_cid
+ * @param status
+ * @param le_audio_role
+ * @param audio_locations_mask
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_AUDIO_LOCATIONS                                  0x29u
+
+/**
+ * @format 12122
+ * @param subevent_code
+ * @param pacs_cid
+ * @param status
+ * @param sink_mask
+ * @param source_mask
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_AVAILABLE_AUDIO_CONTEXTS                         0x2Au
+
+/**
+ * @format 12122
+ * @param subevent_code
+ * @param pacs_cid
+ * @param status
+ * @param sink_mask
+ * @param source_mask
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_SUPPORTED_AUDIO_CONTEXTS                         0x2Bu
+
+/**
+ * @format 1211221211221222JV3JV1JV2JV2JV
+ * @param subevent_code
+ * @param pacs_cid
+ * @param le_audio_role
+ * @param coding_format
+ * @param company_id
+ * @param vendor_specific_codec_id
+ * @param codec_capability_mask
+ * @param supported_sampling_frequencies_mask
+ * @param supported_frame_durations_mask
+ * @param supported_audio_channel_counts_mask
+ * @param supported_octets_per_frame_min_num 
+ * @param supported_octets_per_frame_max_num 
+ * @param supported_max_codec_frames_per_sdu 
+ * @param metadata_mask
+ * @param preferred_audio_contexts_mask
+ * @param streaming_audio_contexts_mask
+ * @param program_info_length
+ * @param program_info
+ * @param language_code
+ * @param ccids_num
+ * @param ccids
+ * @param parental_rating
+ * @param program_info_uri_length
+ * @param program_info_uri
+ * @param extended_metadata_type
+ * @param extended_metadata_value_length
+ * @param extended_metadata_value
+ * @param vendor_specific_metadata_type
+ * @param vendor_specific_metadata_value_length
+ * @param vendor_specific_metadata_value
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_PACK_RECORD                                    0x2Cu
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param pacs_cid
+ * @param le_audio_role
+*/
+#define LEAUDIO_SUBEVENT_PACS_CLIENT_PACK_RECORD_DONE                               0x2Du
+
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_CSIS_SERVER_CONNECTED                                  0x2Eu
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_CSIS_SERVER_DISCONNECTED                               0x2Fu
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param lock
+*/
+#define LEAUDIO_SUBEVENT_CSIS_SERVER_MEMBER_LOCK                                0x30u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param set_size
+*/
+#define LEAUDIO_SUBEVENT_CSIS_SERVER_COORDINATED_SET_SIZE                       0x31u
+
+/**
+ * @format 1B
+ * @param subevent_code
+ * @param rsi
+*/
+#define LEAUDIO_SUBEVENT_CSIS_SERVER_RSI                                        0x32u
+
+/**
+ * @format 1H21
+ * @param subevent_code
+ * @param con_handle
+ * @param csis_cid
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_CONNECTED                                  0x33u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param csis_cid
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_DISCONNECTED                               0x34u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param csis_cid
+ * @param status
+ * @param lock
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_LOCK_WRITE_COMPLETE                        0x35u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param csis_cid
+ * @param status
+ * @param lock
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_LOCK                                       0x36u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param csis_cid
+ * @param status
+ * @param coordinated_set_size
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_COORDINATED_SET_SIZE                       0x37u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param csis_cid
+ * @param status
+ * @param rank
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_RANK                                       0x38u
+
+/**
+ * @format 1211K
+ * @param subevent_code
+ * @param csis_cid
+ * @param status
+ * @param sirk_type
+ * @param sirk
+*/
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_SIRK                                       0x39u
+
+/**
+ * @format 11B1
+ * @param subevent_code
+ * @param source_address_type
+ * @param source_address
+ * @param match
+ */
+#define LEAUDIO_SUBEVENT_CSIS_CLIENT_RSI_MATCH                                  0x3Au
+
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_AICS_SERVER_CONNECTED                                 0x3Bu
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_AICS_SERVER_DISCONNECTED                              0x3Cu
+
+/**
+ * @format 1H11
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param state
+*/
+#define LEAUDIO_SUBEVENT_AICS_SERVER_MUTE_MODE                                 0x3Du
+
+/**
+ * @format 1H11
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param state
+*/
+#define LEAUDIO_SUBEVENT_AICS_SERVER_GAIN_MODE                                 0x3Eu
+
+/**
+ * @format 1H11
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param gain_db
+*/
+#define LEAUDIO_SUBEVENT_AICS_SERVER_GAIN_CHANGED                              0x3Fu
+
+/**
+ * @format 1H1JV
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param description_len
+ * @param description 
+*/
+#define LEAUDIO_SUBEVENT_AICS_SERVER_AUDIO_INPUT_DESC_CHANGED                   0x40u
+
+
+/**
+ * @format 1H211
+ * @param subevent_code
+ * @param con_handle
+ * @param aics_cid
+ * @param aics_index
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_CONNECTED                                        0x41u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_DISCONNECTED                                     0x42u
+
+/**
+ * @format 12111111
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+ * @param gain_setting
+ * @param mute
+ * @param gain_mode
+ * @param change_counter
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_AUDIO_INPUT_STATE                                0x43u
+
+/**
+ * @format 1211111
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+ * @param units
+ * @param minimum_value
+ * @param maximum_value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_GAIN_SETTINGS_PROPERTIES                         0x44u
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+ * @param input_type
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_AUDIO_INPUT_TYPE                                 0x45u
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+ * @param input_status
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_AUDIO_INPUT_STATUS                               0x46u
+
+/**
+ * @format 121JV1
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+ * @param value_len        // Capped at ATT_MTU - 3
+ * @param value
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_AUDIO_DESCRIPTION                                0x47u
+
+/**
+ * @format 12121
+ * @param subevent_code
+ * @param aics_cid
+ * @param aics_index
+ * @param characteristic_uuid
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_AICS_CLIENT_WRITE_DONE                                       0x48u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_MICS_SERVER_CONNECTED                                        0x49u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_MICS_SERVER_DISCONNECTED                                     0x4Au
+
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param mute
+*/
+#define LEAUDIO_SUBEVENT_MICS_SERVER_MUTE                                             0x4Bu
+
+/**
+ * @format 1H211
+ * @param subevent_code
+ * @param con_handle
+ * @param mics_cid
+ * @param aics_services_num
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_CONNECTED                                        0x4Cu
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param mics_cid
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_DISCONNECTED                                     0x4Du
+
+/**
+ * @format 12111111
+ * @param subevent_code
+ * @param mics_cid
+ * @param aics_index
+ * @param gain_setting
+ * @param mute
+ * @param gain_mode
+ * @param change_counter
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_AUDIO_INPUT_STATE                                0x4Eu
+
+/**
+ * @format 1211111
+ * @param subevent_code
+ * @param mics_cid
+ * @param aics_index
+ * @param units
+ * @param minimum_value
+ * @param maximum_value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_GAIN_SETTINGS_PROPERTIES                         0x4Fu
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param mics_cid
+ * @param aics_index
+ * @param input_type
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_AUDIO_INPUT_TYPE                                 0x50u
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param mics_cid
+ * @param aics_index
+ * @param input_status
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_AUDIO_INPUT_STATUS                               0x51u
+
+/**
+ * @format 121JV1
+ * @param subevent_code
+ * @param mics_cid
+ * @param aics_index
+ * @param value_len        // Capped at ATT_MTU - 3
+ * @param value
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_AUDIO_DESCRIPTION                                0x52u
+
+/**
+ * @format 12121
+ * @param subevent_code
+ * @param mics_cid
+ * @param aics_index
+ * @param characteristic_uuid
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_WRITE_DONE                                       0x53u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param cid
+ * @param state
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_MICS_CLIENT_MUTE                                             0x54u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_VCS_SERVER_CONNECTED                                         0x55u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_VCS_SERVER_DISCONNECTED                                      0x56u
+
+/**
+ * @format 1H111
+ * @param subevent_code
+ * @param con_handle
+ * @param volume_setting
+ * @param volume_change_step
+ * @param mute 
+*/
+#define LEAUDIO_SUBEVENT_VCS_SERVER_VOLUME_STATE                                      0x57u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param flags
+*/
+#define LEAUDIO_SUBEVENT_VCS_SERVER_VOLUME_FLAGS                                      0x58u
+
+/**
+ * @format 1H2111
+ * @param subevent_code
+ * @param con_handle
+ * @param vcs_cid
+ * @param aics_services_num
+ * @param vocs_services_num
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_CONNECTED                                         0x59u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param vcs_cid
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_DISCONNECTED                                      0x5Au
+
+
+/**
+ * @format 121111
+ * @param subevent_code
+ * @param vcs_cid
+ * @param volume_setting
+ * @param volume_change_step
+ * @param mute 
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_VOLUME_STATE                                      0x5Bu
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param vcs_cid
+ * @param flags
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_VOLUME_FLAGS                                      0x5Cu
+
+/**
+ * @format 12111111
+ * @param subevent_code
+ * @param vcs_cid
+ * @param aics_index
+ * @param gain_setting
+ * @param mute
+ * @param gain_mode
+ * @param change_counter
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_AUDIO_INPUT_STATE                                0x5Du
+
+/**
+ * @format 1211111
+ * @param subevent_code
+ * @param vcs_cid
+ * @param aics_index
+ * @param units
+ * @param minimum_value
+ * @param maximum_value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_GAIN_SETTINGS_PROPERTIES                         0x5Eu
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param vcs_cid
+ * @param aics_index
+ * @param input_type
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_AUDIO_INPUT_TYPE                                 0x5Fu
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param vcs_cid
+ * @param aics_index
+ * @param input_status
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_AUDIO_INPUT_STATUS                               0x60u
+
+/**
+ * @format 121JV1
+ * @param subevent_code
+ * @param vcs_cid
+ * @param aics_index
+ * @param value_len        // Capped at ATT_MTU - 3
+ * @param value
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_AUDIO_DESCRIPTION                                0x61u
+
+/**
+ * @format 12121
+ * @param subevent_code
+ * @param vcs_cid
+ * @param vocs_index
+ * @param volume_offset
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_VOLUME_OFFSET                                    0x62u
+
+/**
+ * @format 12141
+ * @param subevent_code
+ * @param vcs_cid
+ * @param vocs_index
+ * @param audio_location
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_AUDIO_LOCATION                                   0x63u
+
+/**
+ * @format 121JV1
+ * @param subevent_code
+ * @param vcs_cid
+ * @param vocs_index
+ * @param description_len
+ * @param description
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_AUDIO_OUTPUT_DESCRIPTION                         0x64u
+
+
+/**
+ * @format 12121
+ * @param subevent_code
+ * @param vcs_cid
+ * @param included_service_index
+ * @param characteristic_uuid
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VCS_CLIENT_WRITE_DONE                                        0x65u
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_VOCS_SERVER_CONNECTED                                        0x66u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_VOCS_SERVER_DISCONNECTED                                     0x67u
+
+/**
+ * @format 1H12
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param volume_offset
+*/
+#define LEAUDIO_SUBEVENT_VOCS_SERVER_VOLUME_OFFSET                                    0x68u
+
+/**
+ * @format 1H14
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param audio_location
+*/
+#define LEAUDIO_SUBEVENT_VOCS_SERVER_AUDIO_LOCATION                                   0x69u
+
+/**
+ * @format 1H1JV
+ * @param subevent_code
+ * @param con_handle
+ * @param index
+ * @param description_len
+ * @param description 
+*/
+#define LEAUDIO_SUBEVENT_VOCS_SERVER_AUDIO_OUTPUT_DESCRIPTION                         0x6Au
+
+/**
+ * @format 1H211
+ * @param subevent_code
+ * @param con_handle
+ * @param vocs_cid
+ * @param vocs_index
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VOCS_CLIENT_CONNECTED                                        0x6Bu
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param vocs_cid
+ * @param vocs_index
+*/
+#define LEAUDIO_SUBEVENT_VOCS_CLIENT_DISCONNECTED                                     0x6Cu
+
+/**
+ * @format 121211
+ * @param subevent_code
+ * @param vocs_cid
+ * @param vocs_index
+ * @param volume_offset
+ * @param change_counter
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VOCS_CLIENT_OFFSET_STATE                                     0x6Du
+
+/**
+ * @format 12141
+ * @param subevent_code
+ * @param vocs_cid
+ * @param vocs_index
+ * @param audio_location
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VOCS_CLIENT_AUDIO_LOCATION                                   0x6Eu
+
+/**
+ * @format 121JV1
+ * @param subevent_code
+ * @param vocs_cid
+ * @param vocs_index
+ * @param description_len
+ * @param description 
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_VOCS_CLIENT_AUDIO_OUTPUT_DESCRIPTION                         0x6Fu
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_MCS_SERVER_CONNECTED                                         0x70u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_MCS_SERVER_DISCONNECTED                                     0x71u
+
+/**
+ * @format 1H211
+ * @param subevent_code
+ * @param con_handle
+ * @param media_player_id
+ * @param media_state
+ * @param characteristic_id
+ */
+#define LEAUDIO_SUBEVENT_MCS_SERVER_VALUE_CHANGED                                    0x72u
+
+/**
+ * @format 1H211
+ * @param subevent_code
+ * @param con_handle
+ * @param mcs_cid
+ * @param num_included_clients
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CONNECTED                                        0x73u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param mcs_cid
+*/
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_DISCONNECTED                                     0x74u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len        // Capped at ATT_MTU - 3
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_MEDIA_PLAYER_NAME                                0x75u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len         // If the media player has an icon, the length of the characteristic is six octets, otherwise 0
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_MEDIA_PLAYER_ICON_OBJECT_ID                      0x76u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_MEDIA_PLAYER_ICON_URI                            0x77u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param mcs_cid
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_TRACK_CHANGED                                    0x78u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_TRACK_TITLE                                      0x79u
+
+/**
+ * @format 124
+ * @param subevent_code
+ * @param mcs_cid
+ * @param duration_10ms     // The length of the current track in 0.01-second resolution as a 32-bit signed integer.
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_TRACK_DURATION                                   0x7Au
+
+/**
+ * @format 124
+ * @param subevent_code
+ * @param mcs_cid
+ * @param position_10ms     //  The offset from the start of the track to the current playing position in 0.01-second resolution as a 32-bit signed integer.
+ *                          //  If the media player has no current track, the Track Position characteristic value shall be 0xFFFFFFFF.
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_TRACK_POSITION                                   0x7Bu
+
+/**
+ * @format 122
+ * @param subevent_code
+ * @param mcs_cid
+ * @param speed
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_PLAYBACK_SPEED                                   0x7Cu
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param mcs_cid
+ * @param multiplier
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_SEEKING_SPEED                                    0x7Du
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len             // If the media player has a current track, the length of the characteristic is six octets, otherwise 0
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CURRENT_TRACK_SEGMENTS_OBJECT_ID                 0x7Eu
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len             // If the media player has a current track, the length of the characteristic is six octets, otherwise 0
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CURRENT_TRACK_OBJECT_ID                          0x7Fu
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len             // If the media player has a next track, the length of the characteristic is six octets, otherwise 0
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_NEXT_TRACK_OBJECT_ID                             0x80u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len             // If the media player has a parent group, the length of the characteristic is six octets, otherwise 0
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_PARENT_GROUP_OBJECT_ID                           0x81u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len             // If the media player has a parent group, the length of the characteristic is six octets, otherwise 0
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CURRENT_GROUP_OBJECT_ID                          0x82u
+
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param mcs_cid
+ * @param order
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_PLAYING_ORDER                                    0x83u
+
+/**
+ * @format 122
+ * @param subevent_code
+ * @param mcs_cid
+ * @param bitmap
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_PLAYING_ORDER_SUPPORTED                          0x84u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param mcs_cid
+ * @param state
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_MEDIA_STATE                                      0x85u
+
+/**
+ * @format 124
+ * @param subevent_code
+ * @param mcs_cid
+ * @param bitmap
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CONTROL_POINT_OPCODES_SUPPORTED                  0x86u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param mcs_cid
+ * @param requested_opcode
+ * @param result_code
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CONTROL_POINT_NOTIFICATION                       0x87u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param mcs_cid
+ * @param requested_opcode
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_SEARCH_CONTROL_POINT_NOTIFICATION                0x88u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param mcs_cid
+ * @param value_len             //  If there are search results, the length of the characteristic is six octets
+ * @param value
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_SEARCH_RESULT_OBJECT_ID                          0x89u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param mcs_cid
+ * @param ccid
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_CONTENT_CONTROL_ID                               0x8Au
+
+/**
+ * @format 1221
+ * @param subevent_code
+ * @param mcs_cid
+ * @param characteristic_uuid
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_WRITE_DONE                                       0x8Bu
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param mcs_cid
+ * @param opcode
+ * @param result_code
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_MEDIA_CONTROL_POINT_NOTIFICATION_RESULT          0x8Cu
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param mcs_cid
+ * @param result_code
+ */
+#define LEAUDIO_SUBEVENT_MCS_CLIENT_SEARCH_CONTROL_POINT_NOTIFICATION_RESULT         0x8Du
+
+/**
+ * @format 1H2114
+ * @param subevent_code
+ * @param con_handle
+ * @param media_player_id
+ * @param media_state
+ * @param opcode
+ * @param data
+ */
+#define LEAUDIO_SUBEVENT_MCS_SERVER_MEDIA_CONTROL_POINT_NOTIFICATION_TASK           0x8Eu
+
+/**
+ * @format 1H21JV
+ * @param subevent_code
+ * @param con_handle
+ * @param media_player_id
+ * @param media_state
+ * @param data_length
+ * @param data
+ */
+#define LEAUDIO_SUBEVENT_MCS_SERVER_SEARCH_CONTROL_POINT_NOTIFICATION_TASK           0x8Fu
+
+/**
+ * @format 1H1
+ * @param subevent_code
+ * @param con_handle
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_OTS_SERVER_CONNECTED                                        0x90u
+
+/**
+ * @format 1H
+ * @param subevent_code
+ * @param con_handle
+*/
+#define LEAUDIO_SUBEVENT_OTS_SERVER_DISCONNECTED                                     0x91u
+
+/**
+ * @format 1H11JV
+ * @param subevent_code
+ * @param con_handle
+ * @param filter_index
+ * @param filter_type
+ * @param data_length
+ * @param data
+ */
+#define LEAUDIO_SUBEVENT_OTS_SERVER_FILTER                                          0x92u
+
+
+/**
+ * @format 1H21441
+ * @param subevent_code
+ * @param con_handle
+ * @param ots_cid
+ * @param ots_index
+ * @param oacp_features
+ * @param olcp_features
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_CONNECTED                                        0x96u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param ots_cid
+ * @param ots_index
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_DISCONNECTED                                     0x97u
+
+/**
+ * @format 12121
+ * @param subevent_code
+ * @param ots_cid
+ * @param ots_index
+ * @param characteristic_uuid
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_WRITE_DONE                                       0x98u
+
+/**
+ * @format 12441
+ * @param subevent_code
+ * @param ots_cid
+ * @param oacp_features
+ * @param olcp_features
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_FEATURES                                        0x99u
+
+/**
+ * @format 12JV1
+ * @param subevent_code
+ * @param ots_cid
+ * @param value_len
+ * @param value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_NAME                                      0x9Au
+
+/**
+ * @format 12JV1
+ * @param subevent_code
+ * @param ots_cid
+ * @param value_len
+ * @param value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_TYPE                                      0x9Bu
+
+/**
+ * @format 12441
+ * @param subevent_code
+ * @param ots_cid
+ * @param current_size
+ * @param allocated_size
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_SIZE                                      0x9Cu
+
+/**
+ * @format 122111111
+ * @param subevent_code
+ * @param ots_cid
+ * @param year
+ * @param month
+ * @param day
+ * @param hours
+ * @param minutes
+ * @param seconds
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_FIRST_CREATED                             0x9Du
+
+/**
+ * @format 122111111
+ * @param subevent_code
+ * @param ots_cid
+ * @param year
+ * @param month
+ * @param day
+ * @param hours
+ * @param minutes
+ * @param seconds
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_LAST_MODIFIED                             0x9Eu
+
+/**
+ * @format 12JV1
+ * @param subevent_code
+ * @param ots_cid
+ * @param value_len
+ * @param value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_ID                                        0x9Fu
+
+/**
+ * @format 1241
+ * @param subevent_code
+ * @param ots_cid
+ * @param bitmask
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_PROPERTIES                                0xA1u
+
+/**
+ * @format 1211JV1
+ * @param subevent_code
+ * @param ots_cid
+ * @param index
+ * @param type
+ * @param value_len
+ * @param value
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_FILTER                                            0xA2u
+
+/**
+ * @format 121JV1
+ * @param subevent_code
+ * @param ots_cid
+ * @param flags
+ * @param id_len
+ * @param id
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OBJECT_CHANGED                                   0xA3u
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param ots_cid
+ * @param opcode
+ * @param result_code
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OLCP_RESPONSE                                    0xA4u
+ 
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param ots_cid
+ * @param opcode
+ * @param result_code
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_OACP_RESPONSE                                    0xA5u
+
+/**
+ * @format 121444
+ * @param subevent_code
+ * @param ots_cid
+ * @param state
+ * @param length
+ * @param offset
+ * @param bytes_transferred_num
+*/
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_DATA_CHUNK                                       0xA6u
+
+/**
+ * @format 122
+ * @param subevent_code
+ * @param ots_cid
+ * @param characterictic_uuid
+ */
+#define LEAUDIO_SUBEVENT_OTS_CLIENT_TIMEOUT                                          0xA7u
+
+
+
+/**
+ * @format 1H21
+ * @param subevent_code
+ * @param con_handle
+ * @param bearer_id
+ * @param opcode
+ */
+#define LEAUDIO_SUBEVENT_TBS_SERVER_CALL_CONTROL_POINT_NOTIFICATION_TASK            0xC0u
+
+/**
+ * @format 1H21
+ * @param subevent_code
+ * @param con_handle
+ * @param bearer_id
+ * @param call_id
+ */
+#define LEAUDIO_SUBEVENT_TBS_SERVER_CALL_DEREGISTER_DONE                            0xC1u
+
+/**
+ * @format 1H211
+ * @param subevent_code
+ * @param con_handle
+ * @param tbs_cid
+ * @param num_services
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_CONNECTED                                       0xC2u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param tbs_cid
+*/
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_DISCONNECTED                                    0xC3u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param tbs_cid
+ * @param length
+ * @param name
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_PROVIDER_NAME                            0xC4u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param tbs_cid
+ * @param length
+ * @param uci
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_UCI                                      0xC5u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param tbs_cid
+ * @param technology
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_TECHNOLOGY                               0xC6u
+
+/**
+ * @format 12JV
+ * @param subevent_code
+ * @param tbs_cid
+ * @param length
+ * @param list
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_URI_SCHEMES_SUPPORTED_LIST               0xC7u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param tbs_cid
+ * @param strength
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_SIGNAL_STRENGTH                          0xC8u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param tbs_cid
+ * @param interval
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_SIGNAL_STRENGTH_REPORTING_INTERVAL       0xC9u
+
+/**
+ * @format 12J[J111V]
+ * @param subevent_code
+ * @param tbs_cid
+ * @param list_length
+ * @param list
+ * @param length
+ * @param call_index
+ * @param state
+ * @param flags
+ * @param uri
+ * @param list_end
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_BEARER_LIST_CURRENT_CALLS                       0xCAu
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param tbs_cid
+ * @param id
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_CONTENT_CONTROL_ID                              0xCBu
+
+/**
+ * @format 122
+ * @param subevent_code
+ * @param tbs_cid
+ * @param flags
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_STATUS_FLAGS                                    0xCCu
+
+/**
+ * @format 12J1V
+ * @param subevent_code
+ * @param tbs_cid
+ * @param length
+ * @param call_index
+ * @param uri
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_INCOMING_CALL_TARGET_BEARER_URI                 0xCDu
+
+/**
+ * @format 12J[111]
+ * @param subevent_code
+ * @param tbs_cid
+ * @param list_length
+ * @param list
+ * @param call_index
+ * @param call_state
+ * @param flags
+ * @param list_end
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_CALL_STATE                                      0xCEu
+
+/**
+ * @format 12111
+ * @param subevent_code
+ * @param tbs_cid
+ * @param requested_opcode
+ * @param call_index
+ * @param result_code
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_CALL_CONTROL_POINT                              0xCFu
+
+/**
+ * @format 122
+ * @param subevent_code
+ * @param tbs_cid
+ * @param mask
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_CALL_CONTROL_POINT_OPTIONAL_OPCODES             0xD0u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param tbs_cid
+ * @param call_index
+ * @param reason
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_TERMINATION_REASON                              0xD1u
+
+/**
+ * @format 12J1V
+ * @param subevent_code
+ * @param tbs_cid
+ * @param length
+ * @param call_index
+ * @param uri
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_INCOMING_CALL                                   0xD2u
+
+/**
+ * @format 12J1V
+ * @param subevent_code
+ * @param tbs_cid
+ * @param length
+ * @param call_index
+ * @param name
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_CALL_FRIENDLY_NAME                              0xD3u
+
+/**
+ * @format 12121
+ * @param subevent_code
+ * @param tbs_cid
+ * @param service_index
+ * @param uuid16
+ * @param att_status
+ */
+#define LEAUDIO_SUBEVENT_TBS_CLIENT_WRITE_DONE                                      0xD4u
+
+/**
+ * @format 1221
+ * @param subevent_code
+ * @param con_handle
+ * @param supported_roles
+ * @param status
+ */
+#define LEAUDIO_SUBEVENT_TMAS_CLIENT_SUPPORTED_ROLES_BITMAP                         0xD5u
+
+
+/**
+ * @format 1H21
+ * @param subevent_code
+ * @param con_handle
+ * @param has_cid
+ * @param status
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_CONNECTED                                       0xD6u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param has_cid
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_DISCONNECTED                                    0xD7u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param has_cid
+ * @param features
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_HEARING_AID_FEATURES                            0xD8u
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param has_cid
+ * @param features
+ * @param att_status
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_ACTIVE_PRESET_INDEX                             0xD9u
+
+/**
+ * @format 1211111JV
+ * @param subevent_code
+ * @param has_cid
+ * @param is_last
+ * @param prev_index
+ * @param newly_added_preset_index
+ * @param newly_added_preset_is_writable
+ * @param newly_added_preset_is_available
+ * @param newly_added_preset_name_length
+ * @param newly_added_preset_name
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_GENERIC_UPDATE                        0xDAu
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param has_cid
+ * @param is_last
+ * @param preset_index
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_PRESET_RECORD_DELETED                 0xDBu
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param has_cid
+ * @param is_last
+ * @param preset_index
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_PRESET_RECORD_AVAILABLE               0xDCu
+
+/**
+ * @format 1211
+ * @param subevent_code
+ * @param has_cid
+ * @param is_last
+ * @param preset_index
+*/
+#define LEAUDIO_SUBEVENT_HAS_CLIENT_PRESET_RECORD_UNAVAILABLE             0xDDu
+
+// MAP Meta Event Group
+
+/**
+ * @format 121BH1
+ * @param subevent_code
+ * @param map_cid
+ * @param status
+ * @param bd_addr
+ * @param con_handle
+ * @param incoming
+ */
+#define MAP_SUBEVENT_CONNECTION_OPENED                                    0x01u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param map_cid
+*/
+#define MAP_SUBEVENT_CONNECTION_CLOSED                                    0x02u
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param map_cid
+ * @param status
+ */
+#define MAP_SUBEVENT_OPERATION_COMPLETED                                  0x03u
+
+
+/**
+ * @format 12LV
+ * @param subevent_code
+ * @param map_cid
+ * @param name_len
+ * @param name
+ */
+#define MAP_SUBEVENT_FOLDER_LISTING_ITEM                                  0x04u
+
+/**
+ * @format 12D11
+ * @param subevent_code
+ * @param map_cid
+ * @param handle
+ * @param type map_message_type_t
+ * @param read map_message_status_t
+ */
+#define MAP_SUBEVENT_MESSAGE_LISTING_ITEM                                 0x05u
+
+/**
+ * @format 12P
+ * @param subevent_code
+ * @param map_cid
+ * @param id
+ */
+#define MAP_SUBEVENT_CONVERSATION_LISTING_ITEM                            0x06u
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param map_cid
+ */
+#define MAP_SUBEVENT_PARSING_DONE                                         0x07u
+
+/**
+ * @format 1214
+ * @param subevent_code
+ * @param map_cid
+ * @param mas_instance_id
+ * @param length
+ */
+#define MAP_SUBEVENT_NOTIFICATION_EVENT                                   0x08u
 
 // MESH Meta Event Group
 

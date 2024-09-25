@@ -35,7 +35,12 @@ SRC_CLASSIC_FILES = \
     hid_device.c \
     hsp_ag.c \
     hsp_hs.c \
+    map_client.c \
+    map_server.c \
+    map_util.c \
     obex_iterator.c \
+    opp_client.c \
+    opp_server.c \
     pan.c \
     pbap_client.c \
     rfcomm.c \

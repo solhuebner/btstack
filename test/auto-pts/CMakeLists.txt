@@ -14,10 +14,15 @@ link_libraries(${LIBUSB_LIBRARIES})
 
 # add all directories
 include_directories((../../chipset/realtek))
-include_directories(../../3rd-party/micro-ecc)
+include_directories(../../3rd-party/bluedroid/decoder/include)
+include_directories(../../3rd-party/bluedroid/encoder/include)
+include_directories(../../3rd-party/hxcmod-player)
+include_directories(../../3rd-party/hxcmod-player/mod)
 include_directories(../../3rd-party/lc3-google/include)
+include_directories(../../3rd-party/micro-ecc)
 include_directories(../../3rd-party/rijndael)
 include_directories(../../3rd-party/tinydir)
+include_directories(../../3rd-party/yxml)
 include_directories(../../chipset/bcm)
 include_directories(../../chipset/csr)
 include_directories(../../chipset/cc256x)
@@ -33,12 +38,14 @@ include_directories(../../platform/posix)
 include_directories(../../platform/embedded)
 include_directories(../../platform/lwip)
 include_directories(../../platform/lwip/port)
+include_directories(../../example)
 include_directories(.)
 include_directories(..)
+include_directories(${CMAKE_BINARY_DIR})
 
 # find src files
 file(GLOB SOURCES_BCM       "../../chipset/bcm/*.c")
-file(GLOB SOURCES_CSR       "../../chipset/csr/*.c")
+file(GLOB SOURCES_CSR       "../../chipset/csr/btstack_chipset*.c")
 file(GLOB SOURCES_EM9301    "../../chipset/em9301/*.c")
 file(GLOB SOURCES_SRC       "../../src/*.c" "../../example/sco_demo_util.c")
 file(GLOB SOURCES_CLASSIC   ../../src/classic/btstack_link_key_db_tlv.c
@@ -48,12 +55,15 @@ file(GLOB SOURCES_CLASSIC   ../../src/classic/btstack_link_key_db_tlv.c
 file(GLOB SOURCES_BLE       "../../src/ble/*.c")
 file(GLOB SOURCES_GATT      "../../src/ble/gatt-service/*.c")
 file(GLOB SOURCES_UECC      "../../3rd-party/micro-ecc/uECC.c")
+file(GLOB SOURCES_HXCMOD    "../../3rd-party/hxcmod-player/*.c"  "../../3rd-party/hxcmod-player/mods/*.c")
+file(GLOB SOURCES_LC3_GOOGLE "../../3rd-party/lc3-google/src/*.c")
 file(GLOB SOURCES_POSIX     "../../platform/posix/*.c")
 file(GLOB SOURCES_LIBUSB    "../../platform/libusb/*.c")
 file(GLOB SOURCES_REALTEK   "../../chipset/realtek/*.c")
 file(GLOB SOURCES_ZEPHYR    "../../chipset/zephyr/*.c")
 file(GLOB SOURCES_STLC2500D "../../chipset/stlc2500d/*.c")
 file(GLOB SOURCES_TC2566X   "../../chipset/tc3566x/*.c")
+file(GLOB SOURCES_LE_AUDIO  "../../src/le-audio/*.c" "../../src/le-audio/gatt-service/*.c" "../../example/le_audio_demo_util_source.c")
 
 # remove some
 file(GLOB SOURCES_BLE_OFF "../../src/ble/le_device_db_memory.c")
@@ -72,11 +82,15 @@ set(SOURCES
 	${SOURCES_BLE}
 	${SOURCES_GATT}
 	${SOURCES_UECC}
+	${SOURCES_HXCMOD}
+	${SOURCES_LC3_GOOGLE}
+	${SOURCES_LE_AUDIO}
 	${SOURCES_REALTEK}
 	${SOURCES_ZEPHYR}
 	${SOURCES_REALTEK}
 	${SOURCES_STLC2500D}
 	${SOURCES_TC2566X}
+	${SOURCES_BTP}
 	"../../3rd-party/rijndael/rijndael.c"
 )
 
@@ -91,10 +105,26 @@ add_library(btstack STATIC ${SOURCES})
 set (CC256X_INIT_SCRIPT bluetooth_init_cc2564C_1.5.c)
 include(${BTSTACK_ROOT}/chipset/cc256x/cc256x.cmake)
 
+function(compile_gatt PROFILE_GATT PROFILE_H)
+	add_custom_command(
+		OUTPUT ${PROFILE_H}
+		DEPENDS ${PROFILE_GATT}
+		COMMAND ${CMAKE_SOURCE_DIR}/../../tool/compile_gatt.py
+		ARGS ${PROFILE_GATT} ${PROFILE_H}
+	)
+	message("${PROFILE_GATT} -> ${PROFILE_H}")
+endfunction()
+
+# GATT BAP
+compile_gatt(${CMAKE_SOURCE_DIR}/btp_le_audio_profile.gatt  ${CMAKE_CURRENT_BINARY_DIR}/btp_le_audio_profile.h)
+
+file(GLOB SOURCES_BTP "btpclient.c" "btp_*.c")
+message(${SOURCES_BTP})
+
 # target btpclient-usb
-add_executable(btpclient-usb btpclient.c ../../port/libusb/main.c btp_socket.c)
+add_executable(btpclient-usb ../../port/libusb/main.c ${CMAKE_CURRENT_BINARY_DIR}/btp_le_audio_profile.h ${SOURCES_BTP})
 target_link_libraries(btpclient-usb btstack)
 
 # target btpclient-h4
-add_executable(btpclient-h4 btpclient.c ../../port/posix-h4/main.c btp_socket.c)
+add_executable(btpclient-h4 ../../port/posix-h4/main.c ${CMAKE_CURRENT_BINARY_DIR}/btp_le_audio_profile.h ${SOURCES_BTP})
 target_link_libraries(btpclient-h4 btstack)

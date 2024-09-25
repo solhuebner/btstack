@@ -47,10 +47,11 @@ include_directories(../../platform/embedded)
 include_directories(../../platform/lwip)
 include_directories(../../platform/lwip/port)
 
-file(GLOB SOURCES_SRC       "../../src/*.c" "../../example/sco_demo_util.c")
+file(GLOB SOURCES_SRC       "../../src/*.c" "../../example/*demo_util*.c")
 file(GLOB SOURCES_BLE       "../../src/ble/*.c")
 file(GLOB SOURCES_GATT      "../../src/ble/gatt-service/*.c")
 file(GLOB SOURCES_CLASSIC   "../../src/classic/*.c")
+file(GLOB SOURCES_LE_AUDIO  "../../src/le-audio/*.c" "../../src/le-audio/gatt-service/*.c")
 file(GLOB SOURCES_MESH      "../../src/mesh/*.c" "../../src/mesh/gatt-service/*.c")
 file(GLOB SOURCES_BLUEDROID "../../3rd-party/bluedroid/encoder/srce/*.c" "../../3rd-party/bluedroid/decoder/srce/*.c")
 file(GLOB SOURCES_MD5       "../../3rd-party/md5/md5.c")
@@ -122,6 +123,7 @@ set(SOURCES
 	${SOURCES_POSIX}
 	${SOURCES_RIJNDAEL}
 	${SOURCES_LIBUSB}
+	${SOURCES_LE_AUDIO}
 	${SOURCES_LC3_GOOGLE}
 	${SOURCES_SRC}
 	${SOURCES_BLE}
@@ -143,23 +145,23 @@ find_package(PkgConfig REQUIRED)
 
 # libusb
 pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
-include_directories(${LIBUSB_INCLUDE_DIRS})
-link_directories(${LIBUSB_LIBRARY_DIRS})
-link_libraries(${LIBUSB_LIBRARIES})
+target_include_directories(btstack PUBLIC ${LIBUSB_INCLUDE_DIRS})
+target_link_directories(btstack PUBLIC ${LIBUSB_LIBRARY_DIRS})
+target_link_libraries(btstack PUBLIC ${LIBUSB_LIBRARIES})
 
 # portaudio
 pkg_check_modules(PORTAUDIO portaudio-2.0)
 if(PORTAUDIO_FOUND)
 	message("HAVE_PORTAUDIO")
-	include_directories(${PORTAUDIO_INCLUDE_DIRS})
-	link_directories(${PORTAUDIO_LIBRARY_DIRS})
-	link_libraries(${PORTAUDIO_LIBRARIES})
-	add_compile_definitions(HAVE_PORTAUDIO)
+    target_include_directories( btstack PUBLIC ${PORTAUDIO_INCLUDE_DIRS} )
+    target_link_directories(btstack PUBLIC ${PORTAUDIO_LIBRARY_DIRS})
+    target_link_libraries(btstack PUBLIC ${PORTAUDIO_LIBRARIES})
+    add_compile_definitions(HAVE_PORTAUDIO)
 endif()
 
 # pthread
 find_package(Threads)
-link_libraries(${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(btstack ${CMAKE_THREAD_LIBS_INIT})
 
 # create targets for all examples
 file(GLOB EXAMPLES_C    "../../example/*.c")

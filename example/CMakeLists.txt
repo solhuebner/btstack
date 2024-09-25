@@ -26,6 +26,7 @@ set(EXAMPLES_CLASSIC_ONLY
 	hid_mouse_demo
 	hsp_ag_demo
 	hsp_hs_demo
+	map_client_demo
 	pbap_client_demo
 	sdp_bnep_query
 	sdp_general_query      
@@ -52,6 +53,11 @@ set(EXAMPLES_LE_ONLY
 	hog_host_demo
 	hog_keyboard_demo      
 	hog_mouse_demo
+	le_audio_broadcast_assistant
+	le_audio_broadcast_sink
+	le_audio_broadcast_source
+	le_audio_unicast_gateway
+	le_audio_unicast_headset
 	le_credit_based_flow_control_mode_client 
 	le_credit_based_flow_control_mode_server 
 	le_mitm
@@ -86,6 +92,9 @@ set(EXAMPLES_GATT_FILES
 	hog_host_demo.gatt
 	hog_keyboard_demo.gatt     
 	hog_mouse_demo.gatt
+	le_audio_broadcast_sink.gatt
+	le_audio_unicast_gateway.gatt
+	le_audio_unicast_headset.gatt
 	le_credit_based_flow_control_mode_server.gatt
 	nordic_spp_le_counter.gatt 
 	nordic_spp_le_streamer.gatt

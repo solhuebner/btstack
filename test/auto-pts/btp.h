@@ -61,11 +61,36 @@ extern "C" {
 #define BTP_ERROR_INVALID_INDEX 0x04
 
 // Service IDs
-#define BTP_SERVICE_ID_CORE     0
-#define BTP_SERVICE_ID_GAP      1
-#define BTP_SERVICE_ID_GATT     2
-#define BTP_SERVICE_ID_L2CAP    3
-#define BTP_SERVICE_ID_MESH     4
+#define BTP_SERVICE_ID_CORE      0
+#define BTP_SERVICE_ID_GAP       1
+#define BTP_SERVICE_ID_GATT      2
+#define BTP_SERVICE_ID_L2CAP     3
+#define BTP_SERVICE_ID_MESH      4
+#define BTP_SERVICE_ID_VCS   	 8
+#define BTP_SERVICE_ID_IAS	     9
+#define BTP_SERVICE_ID_AICS	    10
+#define BTP_SERVICE_ID_VOCS	    11
+#define BTP_SERVICE_ID_PACS	    12
+#define BTP_SERVICE_ID_ASCS	    13
+#define BTP_SERVICE_ID_BAP      14
+#define BTP_SERVICE_ID_HAS	    15
+#define BTP_SERVICE_ID_MICP	    16
+#define BTP_SERVICE_ID_CSIS	    17
+#define BTP_SERVICE_ID_MICS	    18
+#define BTP_SERVICE_ID_CCP	    19
+#define BTP_SERVICE_ID_VCP	    20
+#define BTP_SERVICE_ID_CAS	    21
+#define BTP_SERVICE_ID_MCP	    22
+#define BTP_SERVICE_ID_GMCS     23
+#define BTP_SERVICE_ID_HAP	    24
+#define BTP_SERVICE_ID_CSIP	    25
+#define BTP_SERVICE_ID_CAP	    26
+#define BTP_SERVICE_ID_TBS	    27
+#define BTP_SERVICE_ID_TMAP	    28
+#define BTP_SERVICE_ID_OTS	    29
+#define BTP_SERVICE_ID_PBP 	    30
+
+#define BTP_SERVICE_ID_LE_AUDIO 0xf0
 
 #define BTP_OP_ERROR                            0x00
 
@@ -102,6 +127,10 @@ extern "C" {
 #define BTP_GAP_SETTING_PRIVACY                 0x00002000
 #define BTP_GAP_SETTING_CONTROLLER_CONF         0x00004000
 #define BTP_GAP_SETTING_STATIC_ADDRESS          0x00008000
+#define BTP_GAP_SETTING_STATIC_ADDRESS          0x00008000
+#define BTP_GAP_SETTING_STATIC_ADDRESS          0x00008000
+#define BTP_GAP_SETTINGS_SC_ONLY                0x00010000L
+#define BTP_GAP_SETTINGS_EXTENDED_ADVERTISING   0x00020000L
 
 #define BTP_GAP_OP_READ_CONTROLLER_INFO         0x03
 #define BTP_GAP_OP_RESET                        0x04
@@ -160,6 +189,7 @@ extern "C" {
 #define BTP_GAP_EV_PASSKEY_REQUEST              0x85
 #define BTP_GAP_EV_PASSKEY_CONFIRM              0x86
 #define BTP_GAP_EV_IDENTITY_RESOLVED            0x87
+#define BTP_GAP_EV_SECURITY_LEVEL_CHANGED       0x89
 
 
 // GATT Service
@@ -206,6 +236,14 @@ extern "C" {
 #define BTP_GATT_OP_CFG_INDICATE                0x1b
 #define BTP_GATT_OP_GET_ATTRIBUTES              0x1c
 #define BTP_GATT_OP_GET_ATTRIBUTE_VALUE         0x1d
+#define BTP_GATT_OP_CHANGE_DATABASE             0x1e
+#define BTP_GATT_OP_EATT_CONNECT                0x1f
+
+#define BTP_GAP_SET_SC_ONLY                     0x1e
+#define BTP_GAP_SET_SC                          0x1f
+#define BTP_GAP_SET_MIN_ENC_KEY_SIZE            0x20
+#define BTP_GAP_SET_EXTENDED_ADVERTISING        0x21
+
 
 #define BTP_GATT_EV_NOTIFICATION                0x80
 #define BTP_GATT_EV_ATTR_VALUE_CHANGED          0x81
@@ -269,5 +307,21 @@ extern "C" {
 #define BTP_MESH_EV_NET_RECV                    0x86
 #define BTP_MESH_EV_INVALID_BEARER              0x87
 #define BTP_MESH_EV_INCOMP_TIMER_EXP            0x88
+
+
+// LE Audio
+#define BTP_LE_AUDIO_OP_READ_SUPPORTED_COMMANDS   0x01
+#define BTP_LE_AUDIO_OP_ASCS_CONNECT              0x02
+#define BTP_LE_AUDIO_OP_ASCS_CONFIGURE_CODEC      0x03
+#define BTP_LE_AUDIO_OP_ASCS_CONFIGURE_QOS        0x04
+#define BTP_LE_AUDIO_OP_ASCS_ENABLE               0x05
+#define BTP_LE_AUDIO_OP_ASCS_RECEIVER_START_READY 0x06
+#define BTP_LE_AUDIO_OP_ASCS_RECEIVER_STOP_READY  0x07
+#define BTP_LE_AUDIO_OP_ASCS_DISABLE              0x08
+#define BTP_LE_AUDIO_OP_ASCS_RELEASE              0x09
+#define BTP_LE_AUDIO_OP_ASCS_UPDATE_METADATA      0x0A
+#define BTP_LE_AUDIO_OP_CIG_CREATE                0x0B
+#define BTP_LE_AUDIO_OP_CIS_CREATE                0x0C
+#define BTP_LE_AUDIO_OP_CIS_START_STREAMING       0x0D
 
 #endif

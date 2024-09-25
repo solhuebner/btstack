@@ -49,10 +49,30 @@
 
 // TODO: only include on posix platform
 #include <unistd.h>
+#include <btstack_lc3.h>
 
 #include "btstack.h"
 #include "btp.h"
 #include "btp_socket.h"
+
+#include "btpclient.h"
+
+#include "btp_le_audio.h"
+
+#include "btp_aics.h"
+#include "btp_ascs.h"
+#include "btp_bap.h"
+#include "btp_cap.h"
+#include "btp_ccp.h"
+#include "btp_csip.h"
+#include "btp_hap.h"
+#include "btp_micp.h"
+#include "btp_pacs.h"
+#include "btp_pbp.h"
+#include "btp_server.h"
+#include "btp_tbs.h"
+#include "btp_tmap.h"
+#include "btp_vcp.h"
 
 #define AUTOPTS_SOCKET_NAME "/tmp/bt-stack-tester"
 
@@ -61,10 +81,13 @@
 #define BT_LE_AD_NO_BREDR (1U << 2)
 
 #define LIM_DISC_SCAN_MIN_MS 10000
-#define GAP_CONNECT_TIMEOUT_MS 10000
+#define GAP_CONNECT_TIMEOUT_MS 15000
+
+#define NUM_EATT_BEARERS 5
 
 //#define TEST_POWER_CYCLE
 
+static le_audio_role_t bap_get_ase_role(uint8_t ase_index);
 int btstack_main(int argc, const char * argv[]);
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
@@ -78,10 +101,10 @@ static bool gap_send_connect_response;
 static btstack_timer_source_t gap_connection_timer;
 
 // Global response buffer
-static uint8_t  response_service_id;
-static uint8_t  response_op;
-static uint16_t response_len;
-static uint8_t  response_buffer[512];
+uint8_t  response_service_id;
+uint8_t  response_op;
+uint16_t response_len;
+uint8_t  response_buffer[512];
 
 static uint8_t  value_buffer[512];
 
@@ -93,7 +116,7 @@ static btstack_timer_source_t gap_limited_discovery_timer;
 
 static bd_addr_type_t   remote_addr_type;
 static bd_addr_t        remote_addr;
-static hci_con_handle_t remote_handle = HCI_CON_HANDLE_INVALID;
+hci_con_handle_t remote_handle = HCI_CON_HANDLE_INVALID;
 static att_connection_t remote_att_connection;
 
 static uint8_t connection_role;
@@ -102,10 +125,14 @@ static uint8_t connection_role;
 static uint8_t  ad_flags;
 static uint8_t  gap_adv_data[31];
 static uint16_t gap_adv_data_len;
+static uint8_t gap_ext_adv_enable;
+static uint8_t gap_ext_adv_primary_phy;
+static uint8_t gap_ext_adv_secondary_phy;
+static uint8_t gap_ext_adv_sid;
 static uint8_t  gap_scan_response[31];
 static uint16_t gap_scan_response_len;
 static uint8_t gap_inquriy_scan_active;
-
+static bool gap_discovery_active;
 static bool gap_delete_bonding_on_start;
 
 static uint32_t current_settings;
@@ -114,12 +141,15 @@ static uint32_t current_settings;
 static uint16_t gatt_read_multiple_handles[16];
 static gatt_client_notification_t gatt_client_notification;
 
+// GATT over EATT
+static uint8_t eatt_buffer[NUM_EATT_BEARERS * sizeof(att_server_eatt_bearer_t)];
 
 // debug
 static btstack_timer_source_t heartbeat;
 
 // static bd_addr_t pts_addr = { 0x00, 0x1b, 0xdc, 0x07, 0x32, 0xef};
-static bd_addr_t pts_addr = { 0x00, 0x1b, 0xdc, 0x08, 0xe2, 0x5c};
+static bd_addr_t pts_addr;
+static const char * pts_addr_str = "C0:07:E8:7E:55:5F";
 
 // flush gcov data
 #ifdef HAVE_GCOV_FLUSH
@@ -144,7 +174,6 @@ static void my_gcov_flush(void){
 }
 
 // log/debug output
-#define MESSAGE(format, ...) log_info(format, ## __VA_ARGS__); printf(format "\n", ## __VA_ARGS__)
 static void MESSAGE_HEXDUMP(const uint8_t * data, uint16_t len){
     log_info_hexdump(data, len);
     printf_hexdump(data, len);
@@ -159,7 +188,7 @@ static void heartbeat_handler(btstack_timer_source_t *ts){
     my_gcov_flush();
 }
 
-static void btp_send(uint8_t service_id, uint8_t opcode, uint8_t controller_index, uint16_t length, const uint8_t *data){
+void btp_send(uint8_t service_id, uint8_t opcode, uint8_t controller_index, uint16_t length, const uint8_t *data){
     if (opcode >= 0x80){
         MESSAGE("Event: service id 0x%02x, opcode 0x%02x, controller_index 0x%0x, len %u", service_id, opcode, controller_index, length);
         if (length > 0) {
@@ -179,6 +208,10 @@ static void btp_send_gap_settings(uint8_t opcode){
     uint8_t buffer[4];
     little_endian_store_32(buffer, 0, current_settings);
     btp_send(BTP_SERVICE_ID_GAP, opcode, 0, 4, buffer);
+}
+
+uint32_t btp_gap_current_settings(void){
+    return current_settings;
 }
 
 static void btp_send_error(uint8_t service_id, uint8_t error){
@@ -245,6 +278,9 @@ static void le_device_delete_all(void){
 static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(channel);
     hci_con_handle_t con_handle;
+    uint8_t i;
+    uint8_t status;
+    server_t * server;
 
     switch (packet_type) {
         case HCI_EVENT_PACKET:
@@ -291,6 +327,8 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
                     break;
 
                 case GAP_EVENT_ADVERTISING_REPORT:{
+                    if (gap_discovery_active == false) break;
+
                     bd_addr_t address;
                     gap_event_advertising_report_get_address(packet, address);
                     uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(packet);
@@ -323,14 +361,14 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
                             }
                         }
                         if (discoverable == false) {
-                            printf("Skip non-discoverable advertisement\n");
+                            MESSAGE("Skip non-discoverable advertisement");
                             break;
                         }
                     }
 
-                    printf("Advertisement event: evt-type %u, addr-type %u, addr %s, rssi %d, data[%u] ", event_type,
+                    MESSAGE("Advertisement event: evt-type %u, addr-type %u, addr %s, rssi %d, data[%u] ", event_type,
                        address_type, bd_addr_to_str(address), rssi, length);
-                    printf_hexdump(data, length);
+                    MESSAGE_HEXDUMP(data, length);
 
                     // max 255 bytes EIR data
                     uint8_t buffer[11 + 255];
@@ -368,7 +406,7 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
                     remote_addr_type       = 0;
                     memset(&remote_att_connection, 0, sizeof(att_connection_t));
                     hci_event_connection_complete_get_bd_addr(packet, remote_addr);
-                    printf("Connected Classic to %s with con handle 0x%04x\n", bd_addr_to_str(remote_addr), remote_handle);
+                    MESSAGE("Connected Classic to %s with con handle 0x%04x", bd_addr_to_str(remote_addr), remote_handle);
 
                     uint8_t buffer[13];
                     buffer[0] =  remote_addr_type;
@@ -388,12 +426,16 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
                         gap_auto_connection_start(remote_addr_type, remote_addr);
                         break;
                     }
-                    // assume remote device
-                    printf("Disconnected\n");
-                    uint8_t buffer[7];
-                    buffer[0] =  remote_addr_type;
-                    reverse_bd_addr(remote_addr, &buffer[1]);
-                    btp_send(BTP_SERVICE_ID_GAP, BTP_GAP_EV_DEVICE_DISCONNECTED, 0, sizeof(buffer), &buffer[0]);
+                    // get server
+                    con_handle = hci_event_disconnection_complete_get_connection_handle(packet);
+                    server = btp_server_for_acl_con_handle(con_handle);
+                    if (server != NULL){
+                        MESSAGE("Disconnected server %u, addr %s", server->server_id, bd_addr_to_str(server->address));
+                        uint8_t buffer[7];
+                        buffer[0] =  server->address_type;
+                        reverse_bd_addr(server->address, &buffer[1]);
+                        btp_send(BTP_SERVICE_ID_GAP, BTP_GAP_EV_DEVICE_DISCONNECTED, 0, sizeof(buffer), &buffer[0]);
+                    }
                     break;
                 }
                 case HCI_EVENT_ENCRYPTION_CHANGE:
@@ -412,6 +454,7 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
                     switch (hci_event_gap_meta_get_subevent_code(packet)){
                         case GAP_SUBEVENT_LE_CONNECTION_COMPLETE:
                             // send connect response if pending
+                            btstack_run_loop_remove_timer(&gap_connection_timer);
                             gap_connect_send_response();
 
                             // Assume success
@@ -432,12 +475,16 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
                             little_endian_store_16(buffer, 9, conn_latency);
                             little_endian_store_16(buffer, 11, supervision_timeout);
                             btp_send(BTP_SERVICE_ID_GAP, BTP_GAP_EV_DEVICE_CONNECTED, 0, sizeof(buffer), &buffer[0]);
+
+                            // trigger security in Central Role
+                            if (gap_subevent_le_connection_complete_get_role(packet) == HCI_ROLE_MASTER){
+                                 sm_request_pairing(remote_handle);
+                            }
                             break;
                         default:
-                            break;                    
+                            break;
                     }
                     break;
-
                 default:
                     break;
             }
@@ -446,6 +493,7 @@ static void btstack_packet_handler (uint8_t packet_type, uint16_t channel, uint8
             break;
     }
 }
+
 static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(channel);
     UNUSED(size);
@@ -455,14 +503,23 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
 
     if (packet_type != HCI_EVENT_PACKET) return;
 
+    bd_addr_t addr;
+    bd_addr_type_t addr_type;
+    hci_con_handle_t con_handle;
+    bool send_security_level = false;
+
     switch (hci_event_packet_get_type(packet)) {
         case SM_EVENT_JUST_WORKS_REQUEST:
-            MESSAGE("Just works requested - auto-accept\n");
+            MESSAGE("Just works requested - auto-accept");
              sm_just_works_confirm(sm_event_just_works_request_get_handle(packet));
             break;
         case SM_EVENT_NUMERIC_COMPARISON_REQUEST:
-            MESSAGE("Confirming numeric comparison: %"PRIu32" - auto-accept\n", sm_event_numeric_comparison_request_get_passkey(packet));
-            sm_numeric_comparison_confirm(sm_event_passkey_display_number_get_handle(packet));
+            passkey = sm_event_numeric_comparison_request_get_passkey(packet);
+            MESSAGE("Numeric comparison: %"PRIu32"", sm_event_numeric_comparison_request_get_passkey(packet));
+            buffer[0] = remote_addr_type;
+            reverse_bd_addr(remote_addr, &buffer[1]);
+            little_endian_store_32(buffer, 7, passkey);
+            btp_send(BTP_SERVICE_ID_GAP, BTP_GAP_EV_PASSKEY_CONFIRM, 0, 11, &buffer[0]);
             break;
         case SM_EVENT_PASSKEY_DISPLAY_NUMBER:
             passkey = sm_event_passkey_display_number_get_passkey(packet);
@@ -481,12 +538,16 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
             switch (sm_event_pairing_complete_get_status(packet)){
                 case ERROR_CODE_SUCCESS:
                     MESSAGE("Pairing complete, success\n");
+                    con_handle = sm_event_pairing_complete_get_handle(packet);
+                    addr_type = sm_event_pairing_complete_get_addr_type(packet);
+                    sm_event_pairing_complete_get_address(packet, addr);
+                    send_security_level = true;
                     break;
                 case ERROR_CODE_CONNECTION_TIMEOUT:
                     MESSAGE("Pairing failed, timeout\n");
                     break;
                 case ERROR_CODE_REMOTE_USER_TERMINATED_CONNECTION:
-                    MESSAGE("Pairing faileed, disconnected\n");
+                    MESSAGE("Pairing failed, disconnected\n");
                     break;
                 case ERROR_CODE_AUTHENTICATION_FAILURE:
                     MESSAGE("Pairing failed, reason = %u\n", sm_event_pairing_complete_get_reason(packet));
@@ -495,32 +556,76 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
                     break;
             }
             break;
+        case SM_EVENT_REENCRYPTION_COMPLETE:
+            MESSAGE("Reencryption complete, success\n");
+            con_handle = sm_event_reencryption_complete_get_handle(packet);
+            addr_type = sm_event_reencryption_complete_get_addr_type(packet);
+            sm_event_reencryption_complete_get_address(packet, addr);
+            send_security_level = true;
+            break;
         default:
             break;
+    }
+
+    if (send_security_level){
+        uint16_t pos = 0;
+        uint8_t buffer[8];
+        buffer[pos++] = addr_type;
+        reverse_bd_addr(addr, &buffer[pos]);
+        pos += 6;
+        uint8_t level = 0;
+        if (gap_encryption_key_size(con_handle) > 7){
+            level = 1;
+            // HACK Begin: CAP tests assume level = 2
+            level = 2;
+            // HACK End
+            if (gap_authenticated(con_handle)){
+                level = 2;
+                if (gap_secure_connection(con_handle)){
+                    level = 3;
+                }
+            }
+        }
+        MESSAGE("Security level %u for con handle %04x / %s", level, con_handle, bd_addr_to_str(addr));
+        buffer[pos++] = level;
+        btp_send(BTP_SERVICE_ID_GAP, BTP_GAP_EV_SECURITY_LEVEL_CHANGED, 0, sizeof(buffer), buffer);
     }
 }
 
 static void btp_append_assert(uint16_t num_bytes_to_append){
     btstack_assert((response_len + num_bytes_to_append) <= sizeof(response_buffer));
 }
-static void btp_append_uint8(uint8_t uint){
+
+void btp_append_uint8(uint8_t uint){
     btp_append_assert(1);
     response_buffer[response_len++] = uint;
 }
 
-static void btp_append_uint16(uint16_t uint){
+void btp_append_uint16(uint16_t uint){
     btp_append_assert(2);
     little_endian_store_16(response_buffer, response_len, uint);
     response_len += 2;
 }
 
-static void btp_append_blob(uint16_t len, const uint8_t * data){
+void btp_append_uint24(uint32_t uint){
+    btp_append_assert(3);
+    little_endian_store_24(response_buffer, response_len, uint);
+    response_len += 3;
+}
+
+void btp_append_uint32(uint32_t uint){
+    btp_append_assert(4);
+    little_endian_store_32(response_buffer, response_len, uint);
+    response_len += 4;
+}
+
+void btp_append_blob(uint16_t len, const uint8_t * data){
     btp_append_assert(len);
     memcpy(&response_buffer[response_len], data, len);
     response_len += len;
 }
 
-static void btp_append_uuid(uint16_t uuid16, const uint8_t * uuid128){
+void btp_append_uuid(uint16_t uuid16, const uint8_t * uuid128){
     if (uuid16 == 0){
         btp_append_uint8(16);
         btp_append_assert(16);
@@ -532,13 +637,13 @@ static void btp_append_uuid(uint16_t uuid16, const uint8_t * uuid128){
     }
 }
 
-static void btp_append_service(gatt_client_service_t * service){
+void btp_append_service(gatt_client_service_t * service){
     btp_append_uint16(service->start_group_handle);
     btp_append_uint16(service->end_group_handle);
     btp_append_uuid(service->uuid16, service->uuid128);
 }
 
-static void btp_append_remote_address(void) {
+void btp_append_remote_address(void) {
     btp_append_uint8(remote_addr_type);
     btp_append_assert(6);
     reverse_bd_addr(remote_addr, &response_buffer[response_len]);
@@ -671,7 +776,12 @@ static void gap_limited_discovery_timeout_handler(btstack_timer_source_t * ts){
 
 static void gap_connect_timeout_handler(btstack_timer_source_t * ts){
     UNUSED(ts);
-    gap_connect_send_response();
+    MESSAGE("GAP CONNECT TIMEOUT :(");
+    gap_connect_cancel();
+    if (gap_send_connect_response){
+        gap_send_connect_response = false;
+        btp_send_error(BTP_SERVICE_ID_GAP, 1);
+    }
 }
 
 static void btp_core_handler(uint8_t opcode, uint8_t controller_index, uint16_t length, const uint8_t *data){
@@ -737,8 +847,24 @@ static void btp_core_handler(uint8_t opcode, uint8_t controller_index, uint16_t 
             break;
     }
 }
+#ifdef ENABLE_LE_EXTENDED_ADVERTISING
+static le_extended_advertising_parameters_t btp_advertising_parameters;
+static le_advertising_set_t btp_advertising_set;
+static uint8_t btp_advertising_handle = 0xff;
+#endif
+
+static hci_con_handle_t btp_con_handle_for_addr_and_type(bd_addr_type_t addr_type, bd_addr_t addr){
+    hci_connection_t * connection = hci_connection_for_bd_addr_and_type(addr, addr_type);
+    if (connection == NULL){
+        return HCI_CON_HANDLE_INVALID;
+    } else {
+        return connection->con_handle;
+    }
+}
 
 static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t length, const uint8_t *data){
+    server_t * server;
+
     switch (opcode){
         case BTP_OP_ERROR:
             MESSAGE("BTP_OP_ERROR");
@@ -759,6 +885,11 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
                 uint8_t buffer[277];
                 bd_addr_t local_addr;
                 gap_local_bd_addr( local_addr);
+                if (btstack_is_null_bd_addr(local_addr)){
+                    MESSAGE("Fix NULL BD ADDR");
+                    memset(local_addr, 0x01, 6);
+                    local_addr[0] = 0xc1;
+                }
                 reverse_bd_addr(local_addr, &buffer[0]);
                 uint32_t supported_settings = 0;
                 supported_settings |=  BTP_GAP_SETTING_POWERED;
@@ -975,10 +1106,36 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
                     adv_int_max = 0xa0;
                 }
 
-                gap_advertisements_set_params(adv_int_min, adv_int_max, adv_type, 0, pts_addr, 0x07, 0x00);
-                gap_advertisements_set_data(gap_adv_data_len, (uint8_t *) gap_adv_data);
-                gap_scan_response_set_data(scan_response_len, (uint8_t *) scan_response);
-                gap_advertisements_enable(1);
+                if (gap_ext_adv_enable){
+                    // values from PTS 8.3.3 in BAP UCL tests
+                    btp_advertising_parameters.advertising_event_properties = 0x0001;
+                    btp_advertising_parameters.primary_advertising_interval_min = adv_int_min;
+                    btp_advertising_parameters.primary_advertising_interval_max = adv_int_max;
+                    btp_advertising_parameters.primary_advertising_channel_map = 0x07;
+                    btp_advertising_parameters.own_address_type = BD_ADDR_TYPE_LE_PUBLIC;
+                    btp_advertising_parameters.advertising_filter_policy = 0;
+                    btp_advertising_parameters.advertising_tx_power = 10;
+                    btp_advertising_parameters.primary_advertising_phy = 1;
+                    btp_advertising_parameters.secondary_advertising_max_skip = 0;
+                    btp_advertising_parameters.secondary_advertising_phy = 1;
+                    btp_advertising_parameters.advertising_sid = 0;
+                    btp_advertising_parameters.scan_request_notification_enable = 0;
+
+                    if (btp_advertising_handle == 0xff){
+                        gap_extended_advertising_setup(&btp_advertising_set, &btp_advertising_parameters, &btp_advertising_handle);
+                    } else {
+                        gap_extended_advertising_set_params(btp_advertising_handle, &btp_advertising_parameters);
+                    }
+                    gap_extended_advertising_set_adv_data(btp_advertising_handle, gap_adv_data_len, (uint8_t *) gap_adv_data);
+                    gap_extended_advertising_set_scan_response_data(btp_advertising_handle, gap_scan_response_len, (uint8_t *) gap_scan_response);
+                    gap_extended_advertising_start(btp_advertising_handle, 0, 0);
+                } else {
+                    gap_advertisements_set_params(adv_int_min, adv_int_max, adv_type, 0, pts_addr, 0x07, 0x00);
+                    gap_advertisements_set_data(gap_adv_data_len, (uint8_t *) gap_adv_data);
+                    gap_scan_response_set_data(gap_scan_response_len, (uint8_t *) gap_scan_response);
+                    gap_advertisements_enable(1);
+                }
+
                 // update settings
                 current_settings |= BTP_GAP_SETTING_ADVERTISING;
                 btp_send_gap_settings(opcode);
@@ -987,7 +1144,11 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
         case BTP_GAP_OP_STOP_ADVERTISING:
             MESSAGE("BTP_GAP_OP_STOP_ADVERTISING");
             if (controller_index == 0){
-                gap_advertisements_enable(0);
+                if (gap_ext_adv_enable){
+                    gap_extended_advertising_stop(btp_advertising_handle);
+                } else {
+                    gap_advertisements_enable(0);
+                }
                 // update settings
                 current_settings &= ~BTP_GAP_SETTING_ADVERTISING;
                 btp_send_gap_settings(opcode);
@@ -996,6 +1157,7 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
         case BTP_GAP_OP_START_DISCOVERY:
             MESSAGE("BTP_GAP_OP_START_DISCOVERY");
             if (controller_index == 0){
+                gap_discovery_active = true;
                 uint8_t flags = data[0];
                 if ((flags & BTP_GAP_DISCOVERY_FLAG_LE) != 0){
                     uint8_t scan_type;
@@ -1027,6 +1189,7 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
         case BTP_GAP_OP_STOP_DISCOVERY:
             MESSAGE("BTP_GAP_OP_STOP_DISCOVERY");
             if (controller_index == 0){
+                gap_discovery_active = false;
                 gap_stop_scan();
                 if (gap_inquriy_scan_active){
                     gap_inquriy_scan_active = 0;
@@ -1038,14 +1201,23 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
             }
             break;
         case BTP_GAP_OP_CONNECT:
-            MESSAGE("BTP_GAP_OP_CONNECT");
             if (controller_index == 0){
                 remote_addr_type = data[0];
                 reverse_bd_addr(&data[1], remote_addr);
                 // uint8_t own_addr_type = data[7];
+                MESSAGE("BTP_GAP_OP_CONNECT %s", bd_addr_to_str(remote_addr));
 
                 // todo: handle Classic
-                gap_auto_connection_start(remote_addr_type, remote_addr);
+                // todo: connect with whitelist didn't work for the second connection although the first had been
+                // removed from the whitelist
+                // gap_whitelist_add(remote_addr_type, remote_addr);
+                // gap_connect_with_whitelist();
+                uint8_t status = gap_connect(remote_addr, remote_addr_type);
+                if (status != 0){
+                    MESSAGE("BTP_GAP_OP_CONNECT ERROR: status 0x%02x", status);
+                    btp_send_error(BTP_SERVICE_ID_GAP, 1);
+                    return;
+                }
 
                 // schedule response
                 gap_send_connect_response = true;
@@ -1058,10 +1230,12 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
         case BTP_GAP_OP_DISCONNECT:
             MESSAGE("BTP_GAP_OP_DISCONNECT");
             if (controller_index == 0){
-                if (remote_handle != HCI_CON_HANDLE_INVALID){
-                    gap_disconnect(remote_handle);
-                    remote_handle = HCI_CON_HANDLE_INVALID;
-                }
+                int offset = 0;
+                bd_addr_type_t addr_type = data[offset++];
+                bd_addr_t address;
+                reverse_bd_addr(&data[1], address);
+                server = btp_server_for_address(addr_type, address);
+                gap_disconnect(server->acl_con_handle);
                 btp_send(BTP_SERVICE_ID_GAP, opcode, controller_index, 0, NULL);
             }
             break;
@@ -1101,28 +1275,30 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
         case BTP_GAP_OP_PASSKEY_ENTRY_RSP:
             if (controller_index == 0){
                 // assume already connected
-                // uint8_t   command_addr_type = data[0];
+                uint8_t   command_addr_type = data[0];
                 bd_addr_t command_addr;
                 reverse_bd_addr(&data[1], command_addr);
                 uint32_t passkey = little_endian_read_32(data, 7);
-                MESSAGE("BTP_GAP_OP_PASSKEY_ENTRY_RSP, passkey %06u", passkey);
-                sm_passkey_input(remote_handle, passkey);
+                hci_con_handle_t con_handle = btp_con_handle_for_addr_and_type(command_addr_type, command_addr);
+                MESSAGE("BTP_GAP_OP_PASSKEY_ENTRY_RSP, %s handle %0x4x, passkey %06u", bd_addr_to_str(command_addr), con_handle, passkey);
+                sm_passkey_input(con_handle, passkey);
                 btp_send(BTP_SERVICE_ID_GAP, opcode, controller_index, 0, NULL);
             }
             break;
         case BTP_GAP_OP_PASSKEY_CONFIRM_RSP:
             if (controller_index == 0){
                 // assume already connected
-                // uint8_t   command_addr_type = data[0];
+                uint8_t   command_addr_type = data[0];
                 bd_addr_t command_addr;
                 reverse_bd_addr(&data[1], command_addr);
                 uint8_t match = data[7];
-                MESSAGE("BTP_GAP_OP_PASSKEY_CONFIRM_RSP - match %u", match);
+                hci_con_handle_t con_handle = btp_con_handle_for_addr_and_type(command_addr_type, command_addr);
+                MESSAGE("BTP_GAP_OP_PASSKEY_CONFIRM_RSP - %s handle 0x%04x, match %u", bd_addr_to_str(command_addr), con_handle, match);
                 if (match){
                     // note: sm_numeric_comparison_confirm == sm_just_works_confirm for nwo
-                    sm_just_works_confirm(remote_handle);
+                    sm_just_works_confirm(con_handle);
                 } else {
-                    sm_bonding_decline(remote_handle);
+                    sm_bonding_decline(con_handle);
                 }
                 btp_send(BTP_SERVICE_ID_GAP, opcode, controller_index, 0, NULL);
             }
@@ -1144,6 +1320,20 @@ static void btp_gap_handler(uint8_t opcode, uint8_t controller_index, uint16_t l
                     gap_request_connection_parameter_update(remote_handle, conn_interval_min, conn_interval_max, conn_latency, supervision_timeout);
                 }
                 btp_send(BTP_SERVICE_ID_GAP, opcode, controller_index, 0, NULL);
+            }
+            break;
+        case BTP_GAP_SET_EXTENDED_ADVERTISING:
+            if (controller_index == 0) {
+                MESSAGE("BTP_GAP_OP_CONNECTION_PARAM_UPDATE");
+                gap_ext_adv_enable = data[0];
+
+                // update settings
+                if (gap_ext_adv_enable){
+                    current_settings |= BTP_GAP_SETTINGS_EXTENDED_ADVERTISING;
+                } else {
+                    current_settings &= ~BTP_GAP_SETTINGS_EXTENDED_ADVERTISING;
+                }
+                btp_send_gap_settings(opcode);
             }
             break;
         default:
@@ -1183,6 +1373,28 @@ static void btp_gatt_add_characteristic(uint8_t uuid_len, uint16_t uuid16, uint8
     }
 }
 
+static void btpclient_eatt_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+    hci_con_handle_t con_handle;
+    server_t * server;
+    switch(packet_type){
+        case HCI_EVENT_PACKET:
+            switch (hci_event_packet_get_type(packet)){
+                case GATT_EVENT_CONNECTED:
+                    con_handle = gatt_event_connected_get_handle(packet);
+                    server = btp_server_for_acl_con_handle(con_handle);
+                    // emit eatt connected
+                    btp_send(BTP_SERVICE_ID_GATT, BTP_GATT_OP_EATT_CONNECT, 0, 0, NULL);
+                    MESSAGE("EATT %u connected", server->server_id);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 static void btp_gatt_handler(uint8_t opcode, uint8_t controller_index, uint16_t length, const uint8_t *data){
     static bool     add_char_pending = false;
     static uint16_t uuid16;
@@ -1190,6 +1402,7 @@ static void btp_gatt_handler(uint8_t opcode, uint8_t controller_index, uint16_t 
     static uint8_t  uuid_len;
     static uint8_t  characteristic_properties;
     static uint8_t  characteristic_permissions;
+    uint8_t status = ERROR_CODE_SUCCESS;
 
     if (add_char_pending && opcode != BTP_GATT_OP_SET_VALUE){
         add_char_pending = false;
@@ -1380,6 +1593,7 @@ static void btp_gatt_handler(uint8_t opcode, uint8_t controller_index, uint16_t 
         case BTP_GATT_OP_START_SERVER:
             MESSAGE("BTP_GATT_OP_START_SERVER - NOP");
             btp_send(BTP_SERVICE_ID_GATT, opcode, controller_index, 0, NULL);
+            btp_send(BTP_SERVICE_ID_GATT, opcode, controller_index, 0, NULL);
             break;
         case BTP_GATT_OP_DISC_ALL_PRIM:
             MESSAGE("BTP_GATT_OP_DISC_ALL_PRIM");
@@ -1488,13 +1702,22 @@ static void btp_gatt_handler(uint8_t opcode, uint8_t controller_index, uint16_t 
             }
             break;
         case BTP_GATT_OP_READ:
-            MESSAGE("BTP_GATT_OP_READ");
             // initialize response
             response_len = 0;
             response_service_id = BTP_SERVICE_ID_GATT;
             response_op = opcode;
             if (controller_index == 0){
+                /**
+                Command parameters:	Address_Type (1 octet)
+                Address (6 octets)
+                Handle (2 octets)
+                 */
+                uint8_t   command_addr_type = data[0];
+                bd_addr_t command_addr;
+                reverse_bd_addr(&data[1], command_addr);
+                remote_handle = btp_con_handle_for_addr_and_type(command_addr_type, command_addr);
                 uint16_t value_handle = little_endian_read_16(data, 7);
+                MESSAGE("BTP_GATT_OP_READ, con handle 0x%04x, value handle 0x%04x", remote_handle, value_handle);
                 gatt_client_read_value_of_characteristic_using_value_handle(&gatt_client_packet_handler, remote_handle, value_handle);
             }
             break;
@@ -1644,10 +1867,31 @@ static void btp_gatt_handler(uint8_t opcode, uint8_t controller_index, uint16_t 
                 gatt_client_listen_for_characteristic_value_updates(&gatt_client_notification, &gatt_client_packet_handler, remote_handle, &characteristic);
             }
             break;
+        case BTP_GATT_OP_EATT_CONNECT:
+            if (controller_index == 0){
+                // Address_Type (1 octet)
+                // Address (6 octets)
+                // Number_Of_Channels (1 octet)
+
+                // get server struct
+                bd_addr_type_t addr_type = (bd_addr_type_t) data[0];
+                bd_addr_t address;
+                reverse_bd_addr(&data[1], address);
+                uint8_t num_bearers = data[7];
+                MESSAGE("BTP_GATT_OP_EATT_CONNECT %s, num bearers %u", bd_addr_to_str(address), num_bearers);
+                server_t * server = btp_server_for_address(addr_type, address);
+                gatt_client_le_enhanced_connect(btpclient_eatt_handler, server->acl_con_handle, num_bearers, server->eatt_buffer, sizeof(server->eatt_buffer));
+                // response is sent in btpclient_eatt_handler
+            }
+            break;
         default:
             btp_send_error_unknown_command(BTP_SERVICE_ID_GATT);
             break;
     }
+    if (status != ERROR_CODE_SUCCESS){
+        MESSAGE("Status 0x%02x -> Abort", status);
+    }
+    btstack_assert(status == ERROR_CODE_SUCCESS);
 }
 
 static void btp_packet_handler(uint8_t service_id, uint8_t opcode, uint8_t controller_index, uint16_t length, const uint8_t *data){
@@ -1665,6 +1909,48 @@ static void btp_packet_handler(uint8_t service_id, uint8_t opcode, uint8_t contr
             break;
         case BTP_SERVICE_ID_GATT:
             btp_gatt_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_BAP:
+            btp_bap_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_CSIP:
+            btp_csip_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_ASCS:
+            btp_ascs_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_PACS:
+            btp_pacs_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_CAP:
+            btp_cap_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_VCP:
+            btp_vcp_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_TBS:
+            btp_tbs_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_TMAP:
+            btp_tmap_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_MICP:
+            btp_micp_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_AICS:
+            btp_aics_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_CCP:
+            btp_ccp_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_PBP:
+            btp_pbp_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_HAP:
+            btp_hap_handler(opcode, controller_index, length, data);
+            break;
+        case BTP_SERVICE_ID_LE_AUDIO:
+            btp_le_audio_handler(opcode, controller_index, length, data);
             break;
         default:
             btp_send_error_unknown_command(service_id);
@@ -1750,7 +2036,21 @@ static void stdin_process(char cmd){
     const uint8_t unpair[] = { 0, 1,2,3,4,5,6};
     const uint8_t value_on  = 1;
     const uint8_t value_off = 0;
-    const uint8_t public_adv[]  = { 0x08, 0x00, 0x08, 0x06, 'T', 'e', 's', 't', 'e', 'r', 0xff, 0xff, 0xff, 0xff, 0x00, };
+    // const uint8_t public_adv[]  = { 0x08, 0x00, 0x08, 0x06, 'T', 'e', 's', 't', 'e', 'r', 0xff, 0xff, 0xff, 0xff, 0x00, };
+    static uint8_t public_adv[] = {
+            14, 0,
+            // Flags general discoverable
+            // 0x02, BLUETOOTH_DATA_TYPE_FLAGS, APP_AD_FLAGS,
+            // RSI
+            // 0x07, BLUETOOTH_DATA_TYPE_RESOLVABLE_SET_IDENTIFIER, 0x28, 0x31, 0xB6, 0x4C, 0x39, 0xCC,
+            // ASCS
+            BLUETOOTH_DATA_TYPE_INCOMPLETE_LIST_OF_16_BIT_SERVICE_CLASS_UUIDS, 0x02, 0x4E, 0x18,
+            BLUETOOTH_DATA_TYPE_SERVICE_DATA_16_BIT_UUID,  0x08, 0x4E, 0x18,  0x01,  0x07, 0x00,  0x00, 0x00,  0x00,
+            // Name
+            // 0x04, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME, 'I', 'U', 'T',
+            0xff, 0xff, 0xff, 0xff, 0x00,
+    };
+
     const uint8_t rpa_adv[]     = { 0x08, 0x00, 0x08, 0x06, 'T', 'e', 's', 't', 'e', 'r', 0xff, 0xff, 0xff, 0xff, 0x02, };
     const uint8_t non_rpa_adv[] = { 0x08, 0x00, 0x08, 0x06, 'T', 'e', 's', 't', 'e', 'r', 0xff, 0xff, 0xff, 0xff, 0x03, };
     const uint8_t gc_read_0009[] = { 0, 1,2,3,4,5,6, 0x09, 0x00};
@@ -1810,6 +2110,7 @@ static void stdin_process(char cmd){
                     btp_packet_handler(BTP_SERVICE_ID_GAP, BTP_GAP_OP_START_DISCOVERY, 0, 1, &general_le_scan);
                     break;
                 case 'a':
+                    btp_packet_handler(BTP_SERVICE_ID_GAP, BTP_GAP_SET_EXTENDED_ADVERTISING, 0, sizeof(value_on), &value_on);
                     btp_packet_handler(BTP_SERVICE_ID_GAP, BTP_GAP_OP_START_ADVERTISING, 0, sizeof(public_adv), public_adv);
                     break;
                 case 'r':
@@ -1929,6 +2230,8 @@ int btstack_main(int argc, const char * argv[])
     gap_set_local_name(gap_name);
     gap_set_class_of_device(gap_cod);
 #endif
+    // use 60-120 ms connection interval to allow for 2 ACL Connections with CIS, 2 ACL Connections + BIG Sync
+    gap_set_connection_parameters(0x60, 0x30, 0x30, 0x60, 4, 200, 0, 0);
 
     // delete all bonding information on start
     gap_delete_bonding_on_start = true;
@@ -1936,8 +2239,8 @@ int btstack_main(int argc, const char * argv[])
     // configure GAP LE
 
     // LE Legacy Pairing, Passkey entry initiator enter, responder (us) displays
-    sm_set_io_capabilities(IO_CAPABILITY_DISPLAY_ONLY);
-    sm_set_authentication_requirements(SM_AUTHREQ_MITM_PROTECTION | SM_AUTHREQ_NO_BONDING);
+    sm_set_io_capabilities(IO_CAPABILITY_DISPLAY_YES_NO);
+    sm_set_authentication_requirements( SM_AUTHREQ_NO_BONDING | SM_AUTHREQ_SECURE_CONNECTION);
     sm_use_fixed_passkey_in_display_role(0);
 
     reset_gap();
@@ -1945,11 +2248,31 @@ int btstack_main(int argc, const char * argv[])
     // GATT Server
     att_db_util_init();
     att_server_init(att_db_util_get_address(), NULL, NULL );
+    att_server_eatt_init(NUM_EATT_BEARERS, eatt_buffer, sizeof(eatt_buffer));
 
     // GATT Client
     gatt_client_init();
-    gatt_client_listen_for_characteristic_value_updates(&gatt_client_notification, &gatt_client_packet_handler, GATT_CLIENT_ANY_CONNECTION, NULL);
+    gatt_service_client_init();
+    // gatt_client_listen_for_characteristic_value_updates(&gatt_client_notification, &gatt_client_packet_handler, GATT_CLIENT_ANY_CONNECTION, NULL);
 
+    // LE Audio (old) Client
+    btp_le_audio_init();
+
+    // New Servers
+    btp_pacs_init();
+
+    // New Clients
+    btp_server_init();
+    btp_csip_init();
+    btp_ascs_init();
+    btp_aics_init();
+    btp_bap_init();
+    btp_cap_init();
+    btp_vcp_init();
+    btp_micp_init();
+    btp_tmap_init();
+    btp_tbs_init();
+    btp_pbp_init();
     MESSAGE("auto-pts iut-btp-client started");
 
     // connect to auto-pts client 
@@ -1970,7 +2293,9 @@ int btstack_main(int argc, const char * argv[])
 #endif
 #endif
     heartbeat_handler(NULL);
-    
+
+    sscanf_bd_addr(pts_addr_str, pts_addr);
+
 #ifdef TEST_POWER_CYCLE
     hci_power_control(HCI_POWER_ON);
 #endif

@@ -33,6 +33,7 @@ include_directories(${BTSTACK_ROOT}/3rd-party/lc3-google/include)
 include_directories(${BTSTACK_ROOT}/3rd-party/md5)
 include_directories(${BTSTACK_ROOT}/3rd-party/hxcmod-player)
 include_directories(${BTSTACK_ROOT}/3rd-party/hxcmod-player/mod)
+include_directories(${BTSTACK_ROOT}/3rd-party/lc3-google/include)
 include_directories(${BTSTACK_ROOT}/3rd-party/lwip/core/src/include)
 include_directories(${BTSTACK_ROOT}/3rd-party/lwip/dhcp-server)
 include_directories(${BTSTACK_ROOT}/3rd-party/rijndael)
@@ -52,7 +53,7 @@ include_directories(${BTSTACK_ROOT}/platform/lwip)
 include_directories(${BTSTACK_ROOT}/platform/lwip/port)
 include_directories(${BTSTACK_ROOT}/platform/posix)
 
-file(GLOB SOURCES_SRC       "${BTSTACK_ROOT}/src/*.c" "${BTSTACK_ROOT}/example/sco_demo_util.c")
+file(GLOB SOURCES_SRC       "${BTSTACK_ROOT}/src/*.c" "${BTSTACK_ROOT}/example/*demo_util*.c")
 file(GLOB SOURCES_BLE       "${BTSTACK_ROOT}/src/ble/*.c")
 file(GLOB SOURCES_BLUEDROID "${BTSTACK_ROOT}/3rd-party/bluedroid/encoder/srce/*.c" "${BTSTACK_ROOT}/3rd-party/bluedroid/decoder/srce/*.c")
 file(GLOB SOURCES_CLASSIC   "${BTSTACK_ROOT}/src/classic/*.c")
@@ -60,6 +61,7 @@ file(GLOB SOURCES_MESH      "${BTSTACK_ROOT}/src/mesh/*.c")
 file(GLOB SOURCES_GATT      "${BTSTACK_ROOT}/src/ble/gatt-service/*.c")
 file(GLOB SOURCES_UECC      "${BTSTACK_ROOT}/3rd-party/micro-ecc/uECC.c")
 file(GLOB SOURCES_HXCMOD    "${BTSTACK_ROOT}/3rd-party/hxcmod-player/*.c"  "${BTSTACK_ROOT}/3rd-party/hxcmod-player/mods/*.c")
+file(GLOB SOURCES_LE_AUDIO  "${BTSTACK_ROOT}/src/le-audio/*.c" "${BTSTACK_ROOT}/src/le-audio/gatt-service/*.c")
 file(GLOB SOURCES_MD5       "${BTSTACK_ROOT}/3rd-party/md5/md5.c")
 file(GLOB SOURCES_RIJNDAEL  "${BTSTACK_ROOT}/3rd-party/rijndael/rijndael.c")
 file(GLOB SOURCES_YXML      "${BTSTACK_ROOT}/3rd-party/yxml/yxml.c")
@@ -131,6 +133,8 @@ set(SOURCES
 		${SOURCES_GATT}
 		${SOURCES_HXCMOD}
 		${SOURCES_HXCMOD}
+		${SOURCES_LC3_GOOGLE}
+		${SOURCES_LE_AUDIO}
 		${SOURCES_LIBUSB}
 		${SOURCES_MD5}
 		${SOURCES_MESH}
@@ -151,6 +155,9 @@ list(SORT SOURCES)
 # create static lib
 add_library(btstack STATIC ${SOURCES})
 
+# Collect libraries for executables
+set (BTSTACK_LIBRARIES btstack)
+
 # pkgconfig
 find_package(PkgConfig)
 
@@ -160,18 +167,18 @@ if (PkgConfig_FOUND)
 	if(PORTAUDIO_FOUND)
 		message("HAVE_PORTAUDIO")
 		include_directories(${PORTAUDIO_INCLUDE_DIRS})
+		set(BTSTACK_LIBRARIES ${BTSTACK_LIBRARIES} ${PORTAUDIO_LIBRARIES})
 		link_directories(${PORTAUDIO_LIBRARY_DIRS})
-		link_libraries(${PORTAUDIO_LIBRARIES})
 		add_compile_definitions(HAVE_PORTAUDIO)
 	endif()
 endif()
 
 # pthread
 find_package(Threads)
-link_libraries(${CMAKE_THREAD_LIBS_INIT})
+set(BTSTACK_LIBRARIES ${BTSTACK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} pthread m)
 
 # Add CC256x Support and specify init script
-set (CC256X_INIT_SCRIPT bluetooth_init_cc2564C_1.5.c)
+set(CC256X_INIT_SCRIPT bluetooth_init_cc2564C_1.5.c)
 include(${BTSTACK_ROOT}/chipset/cc256x/cc256x.cmake)
 
 # Add BCM Support and download PatchRAM files
@@ -202,5 +209,5 @@ foreach(EXAMPLE ${EXAMPLES})
 		message("example ${EXAMPLE}")
 	endif()
 	add_executable(${EXAMPLE} ${SOURCES_EXAMPLE})
-	target_link_libraries(${EXAMPLE} btstack pthread)
+	target_link_libraries(${EXAMPLE} ${BTSTACK_LIBRARIES})
 endforeach(EXAMPLE)
