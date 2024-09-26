@@ -6511,6 +6511,128 @@ typedef uint8_t sm_key_t[16];
  */
 #define MAP_SUBEVENT_NOTIFICATION_EVENT                                   0x08u
 
+// subevent for "x-bt/message"
+
+ /**
+  * @format 124JV
+  * @param subevent_code
+  * @param map_cid
+  * @param continuation
+  * @param name_len
+  * @param name
+  */
+#define MAP_SUBEVENT_GET_MESSAGE                                           0x09u
+
+/**
+ * @format 1211JV
+ * @param subevent_code
+ * @param map_cid
+ * @param status_indicator
+ * @param status_value
+ * @param name_len
+ * @param name
+ */
+#define MAP_SUBEVENT_SET_MESSAGE_STATUS                     0x0Au
+
+/**
+ * @format 12
+ * @param subevent_code
+ * @param map_cid
+ */
+#define MAP_SUBEVENT_UPDATE_INBOX                     0x0Bu
+
+/**
+ * @format 1241111JVJV
+ * @param subevent_code
+ * @param map_cid
+ * @param continuation
+ * @param opcode
+ * @param charset
+ * @param attachment
+ * @param modify_text
+ * @param message_handle_len
+ * @param message_handle
+ * @param name_len
+ * @param name
+ */
+#define MAP_SUBEVENT_PUSH_MESSAGE                            0x0Cu
+
+/**
+ * @format 1241
+ * @param subevent_code
+ * @param map_cid
+ * @param connection_id
+ * @param notification_status
+ */
+#define MAP_SUBEVENT_SET_NOTIFICATION_REGISTRATION          0x0Du
+
+/**
+ * @format 1244
+ * @param subevent_code
+ * @param map_cid
+ * @param connection_id
+ * @param notification_filter_mask
+ */
+#define MAP_SUBEVENT_SET_NOTIFICATION_FILTER            0x0Eu
+
+/**
+ * @format 121JV
+ * @param subevent_code
+ * @param map_cid
+ * @param chat_state
+ * @param last_activity_len
+ * @param last_activity
+ */
+#define MAP_SUBEVENT_SET_OWNER_STATUS                       0x0Fu
+
+/**
+ * @format 121
+ * @param subevent_code
+ * @param map_cid
+ * @param mas_instance_id
+ */
+#define MAP_SUBEVENT_GET_MAS_INSTANCE_INFORMATION           0x10u
+
+/**
+ * @format 12422
+ * @param subevent_code
+ * @param map_cid
+ * @param continuation
+ * @param max_list_count
+ * @param start_index
+ */
+#define MAP_SUBEVENT_GET_FOLDER_LISTING_ITEM                0x11u
+
+/**
+ * @format 12422JV
+ * @param subevent_code
+ * @param map_cid
+ * @param continuation internal state set from app via map_access_server_send_get_put_response
+ * @param max_list_count
+ * @param list_start_offset
+ * @param name_len
+ * @param name
+ */
+#define MAP_SUBEVENT_GET_MESSAGE_LISTING                    0x12u
+
+/**
+ * @format 1242JVJVJVJV
+ * @param subevent_code
+ * @param map_cid
+ * @param continuation internal state set from app via map_access_server_send_get_put_response
+ * @param max_list_count
+ * @param conversation_id_len
+ * @param conversation_id
+ * @param filter_recipient_len
+ * @param filter_recipient
+ * @param filter_period_begin_len
+ * @param filter_period_begin
+ * @param filter_period_end_len
+ * @param filter_period_end
+ */
+#define MAP_SUBEVENT_GET_CONVERSATION_LISTING                      0x13u
+
+
 // MESH Meta Event Group
 
 /**

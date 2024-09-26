@@ -21765,6 +21765,494 @@ static inline uint32_t map_subevent_notification_event_get_length(const uint8_t 
     return little_endian_read_32(event, 6);
 }
 
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_GET_MESSAGE
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_message_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field continuation from event MAP_SUBEVENT_GET_MESSAGE
+ * @param event packet
+ * @return continuation
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_get_message_get_continuation(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field name_len from event MAP_SUBEVENT_GET_MESSAGE
+ * @param event packet
+ * @return name_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_get_message_get_name_len(const uint8_t * event){
+    return event[9];
+}
+/**
+ * @brief Get field name from event MAP_SUBEVENT_GET_MESSAGE
+ * @param event packet
+ * @return name
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_get_message_get_name(const uint8_t * event){
+    return &event[10];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_SET_MESSAGE_STATUS
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_set_message_status_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field status_indicator from event MAP_SUBEVENT_SET_MESSAGE_STATUS
+ * @param event packet
+ * @return status_indicator
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_set_message_status_get_status_indicator(const uint8_t * event){
+    return event[5];
+}
+/**
+ * @brief Get field status_value from event MAP_SUBEVENT_SET_MESSAGE_STATUS
+ * @param event packet
+ * @return status_value
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_set_message_status_get_status_value(const uint8_t * event){
+    return event[6];
+}
+/**
+ * @brief Get field name_len from event MAP_SUBEVENT_SET_MESSAGE_STATUS
+ * @param event packet
+ * @return name_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_set_message_status_get_name_len(const uint8_t * event){
+    return event[7];
+}
+/**
+ * @brief Get field name from event MAP_SUBEVENT_SET_MESSAGE_STATUS
+ * @param event packet
+ * @return name
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_set_message_status_get_name(const uint8_t * event){
+    return &event[8];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_UPDATE_INBOX
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_update_inbox_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_push_message_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field continuation from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return continuation
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_push_message_get_continuation(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field opcode from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return opcode
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_push_message_get_opcode(const uint8_t * event){
+    return event[9];
+}
+/**
+ * @brief Get field charset from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return charset
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_push_message_get_charset(const uint8_t * event){
+    return event[10];
+}
+/**
+ * @brief Get field attachment from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return attachment
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_push_message_get_attachment(const uint8_t * event){
+    return event[11];
+}
+/**
+ * @brief Get field modify_text from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return modify_text
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_push_message_get_modify_text(const uint8_t * event){
+    return event[12];
+}
+/**
+ * @brief Get field message_handle_len from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return message_handle_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_push_message_get_message_handle_len(const uint8_t * event){
+    return event[13];
+}
+/**
+ * @brief Get field message_handle from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return message_handle
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_push_message_get_message_handle(const uint8_t * event){
+    return &event[14];
+}
+/**
+ * @brief Get field name_len from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return name_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_push_message_get_name_len(const uint8_t * event){
+    return event[14u + event[13]];
+}
+/**
+ * @brief Get field name from event MAP_SUBEVENT_PUSH_MESSAGE
+ * @param event packet
+ * @return name
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_push_message_get_name(const uint8_t * event){
+    return &event[14u + event[13] + 1u];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_SET_NOTIFICATION_REGISTRATION
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_set_notification_registration_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field connection_id from event MAP_SUBEVENT_SET_NOTIFICATION_REGISTRATION
+ * @param event packet
+ * @return connection_id
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_set_notification_registration_get_connection_id(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field notification_status from event MAP_SUBEVENT_SET_NOTIFICATION_REGISTRATION
+ * @param event packet
+ * @return notification_status
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_set_notification_registration_get_notification_status(const uint8_t * event){
+    return event[9];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_SET_NOTIFICATION_FILTER
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_set_notification_filter_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field connection_id from event MAP_SUBEVENT_SET_NOTIFICATION_FILTER
+ * @param event packet
+ * @return connection_id
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_set_notification_filter_get_connection_id(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field notification_filter_mask from event MAP_SUBEVENT_SET_NOTIFICATION_FILTER
+ * @param event packet
+ * @return notification_filter_mask
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_set_notification_filter_get_notification_filter_mask(const uint8_t * event){
+    return little_endian_read_32(event, 9);
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_SET_OWNER_STATUS
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_set_owner_status_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field chat_state from event MAP_SUBEVENT_SET_OWNER_STATUS
+ * @param event packet
+ * @return chat_state
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_set_owner_status_get_chat_state(const uint8_t * event){
+    return event[5];
+}
+/**
+ * @brief Get field last_activity_len from event MAP_SUBEVENT_SET_OWNER_STATUS
+ * @param event packet
+ * @return last_activity_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_set_owner_status_get_last_activity_len(const uint8_t * event){
+    return event[6];
+}
+/**
+ * @brief Get field last_activity from event MAP_SUBEVENT_SET_OWNER_STATUS
+ * @param event packet
+ * @return last_activity
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_set_owner_status_get_last_activity(const uint8_t * event){
+    return &event[7];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_GET_MAS_INSTANCE_INFORMATION
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_mas_instance_information_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field mas_instance_id from event MAP_SUBEVENT_GET_MAS_INSTANCE_INFORMATION
+ * @param event packet
+ * @return mas_instance_id
+ * @note: btstack_type 1
+ */
+static inline uint8_t map_subevent_get_mas_instance_information_get_mas_instance_id(const uint8_t * event){
+    return event[5];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_GET_FOLDER_LISTING_ITEM
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_folder_listing_item_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field continuation from event MAP_SUBEVENT_GET_FOLDER_LISTING_ITEM
+ * @param event packet
+ * @return continuation
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_get_folder_listing_item_get_continuation(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field max_list_count from event MAP_SUBEVENT_GET_FOLDER_LISTING_ITEM
+ * @param event packet
+ * @return max_list_count
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_folder_listing_item_get_max_list_count(const uint8_t * event){
+    return little_endian_read_16(event, 9);
+}
+/**
+ * @brief Get field start_index from event MAP_SUBEVENT_GET_FOLDER_LISTING_ITEM
+ * @param event packet
+ * @return start_index
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_folder_listing_item_get_start_index(const uint8_t * event){
+    return little_endian_read_16(event, 11);
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_GET_MESSAGE_LISTING
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_message_listing_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field continuation from event MAP_SUBEVENT_GET_MESSAGE_LISTING
+ * @param event packet
+ * @return continuation
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_get_message_listing_get_continuation(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field max_list_count from event MAP_SUBEVENT_GET_MESSAGE_LISTING
+ * @param event packet
+ * @return max_list_count
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_message_listing_get_max_list_count(const uint8_t * event){
+    return little_endian_read_16(event, 9);
+}
+/**
+ * @brief Get field list_start_offset from event MAP_SUBEVENT_GET_MESSAGE_LISTING
+ * @param event packet
+ * @return list_start_offset
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_message_listing_get_list_start_offset(const uint8_t * event){
+    return little_endian_read_16(event, 11);
+}
+/**
+ * @brief Get field name_len from event MAP_SUBEVENT_GET_MESSAGE_LISTING
+ * @param event packet
+ * @return name_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_get_message_listing_get_name_len(const uint8_t * event){
+    return event[13];
+}
+/**
+ * @brief Get field name from event MAP_SUBEVENT_GET_MESSAGE_LISTING
+ * @param event packet
+ * @return name
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_get_message_listing_get_name(const uint8_t * event){
+    return &event[14];
+}
+
+/**
+ * @brief Get field map_cid from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return map_cid
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_conversation_listing_get_map_cid(const uint8_t * event){
+    return little_endian_read_16(event, 3);
+}
+/**
+ * @brief Get field continuation from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return continuation
+ * @note: btstack_type 4
+ */
+static inline uint32_t map_subevent_get_conversation_listing_get_continuation(const uint8_t * event){
+    return little_endian_read_32(event, 5);
+}
+/**
+ * @brief Get field max_list_count from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return max_list_count
+ * @note: btstack_type 2
+ */
+static inline uint16_t map_subevent_get_conversation_listing_get_max_list_count(const uint8_t * event){
+    return little_endian_read_16(event, 9);
+}
+/**
+ * @brief Get field conversation_id_len from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return conversation_id_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_get_conversation_listing_get_conversation_id_len(const uint8_t * event){
+    return event[11];
+}
+/**
+ * @brief Get field conversation_id from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return conversation_id
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_get_conversation_listing_get_conversation_id(const uint8_t * event){
+    return &event[12];
+}
+/**
+ * @brief Get field filter_recipient_len from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return filter_recipient_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_get_conversation_listing_get_filter_recipient_len(const uint8_t * event){
+    return event[12u + event[11]];
+}
+/**
+ * @brief Get field filter_recipient from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return filter_recipient
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_get_conversation_listing_get_filter_recipient(const uint8_t * event){
+    return &event[12u + event[11] + 1u];
+}
+/**
+ * @brief Get field filter_period_begin_len from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return filter_period_begin_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_get_conversation_listing_get_filter_period_begin_len(const uint8_t * event){
+    return event[12u + event[11] + 1u + event[12u + event[11]]];
+}
+/**
+ * @brief Get field filter_period_begin from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return filter_period_begin
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_get_conversation_listing_get_filter_period_begin(const uint8_t * event){
+    return &event[12u + event[11] + 1u + event[12u + event[11]] + 1u];
+}
+/**
+ * @brief Get field filter_period_end_len from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return filter_period_end_len
+ * @note: btstack_type J
+ */
+static inline uint8_t map_subevent_get_conversation_listing_get_filter_period_end_len(const uint8_t * event){
+    return event[12u + event[11] + 1u + event[12u + event[11]] + 1u + event[12u + event[11] + 1u + event[12u + event[11]]]];
+}
+/**
+ * @brief Get field filter_period_end from event MAP_SUBEVENT_GET_CONVERSATION_LISTING
+ * @param event packet
+ * @return filter_period_end
+ * @note: btstack_type V
+ */
+static inline const uint8_t * map_subevent_get_conversation_listing_get_filter_period_end(const uint8_t * event){
+    return &event[12u + event[11] + 1u + event[12u + event[11]] + 1u + event[12u + event[11] + 1u + event[12u + event[11]]] + 1u];
+}
+
 
 /**
  * @brief Get field status from event MESH_SUBEVENT_PB_TRANSPORT_PDU_SENT

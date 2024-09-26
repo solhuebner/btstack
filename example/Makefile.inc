@@ -212,6 +212,7 @@ EXAMPLES_CLASSIC_ONLY =     \
 	hid_mouse_demo          \
 	hsp_ag_demo             \
 	hsp_hs_demo             \
+	map_client_demo         \
 	opp_client_demo         \
 	opp_server_demo         \
 	pbap_client_demo        \
