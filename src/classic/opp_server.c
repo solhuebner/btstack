@@ -57,7 +57,7 @@
 #include "classic/sdp_util.h"
 #include "classic/opp_server.h"
 
-// use replacment in Visual Studio
+// use replacement in Visual Studio
 #ifdef _MSC_VER
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
