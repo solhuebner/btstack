@@ -339,6 +339,11 @@ static void stdin_process(char cmd){
             status = hearing_access_service_server_preset_record_set_name(2, "New Name item");
             break;
 
+        case 'G':
+            printf("Delete all presets\n");
+            status = hearing_access_service_server_delete_all_presets();
+            break;
+
         case '\n':
         case '\r':
             break;
