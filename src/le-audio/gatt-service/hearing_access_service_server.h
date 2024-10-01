@@ -100,6 +100,7 @@ void hearing_access_service_server_register_packet_handler(btstack_packet_handle
 
 uint8_t hearing_access_service_server_add_preset(uint8_t properties, char * name);
 uint8_t hearing_access_service_server_delete_preset(uint8_t index);
+uint8_t hearing_access_service_server_delete_all_presets(void);
 
 uint8_t hearing_access_service_server_preset_record_set_active(uint8_t index);
 uint8_t hearing_access_service_server_preset_record_set_available(uint8_t index);

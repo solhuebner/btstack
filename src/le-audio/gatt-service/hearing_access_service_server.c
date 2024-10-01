@@ -104,7 +104,6 @@ static has_preset_record_t * has_preset_records;
 
 static uint8_t  has_preset_records_max_num = 0;
 static uint8_t  has_preset_records_num = 0;
-static uint8_t  has_queued_preset_records_num = 0;
 
 static uint16_t   has_active_preset_index_client_configuration_handle;
 static uint16_t   has_active_preset_index_client_configuration;
@@ -392,19 +391,21 @@ static has_preset_record_t * has_server_preset_iterator_get_next(has_server_conn
     if (connection->current_position == HAS_PRESET_RECORD_INVALID_POSITION) {
         // find first index equal to or greater than start_index
         connection->current_position = has_server_preset_position_for_index(connection->start_index);
+        connection->num_presets_already_read = 0;
+    } else {
+        connection->current_position++;
     }
 
     bool preset_found = false;
     while (!preset_found && (connection->current_position < (has_preset_records_max_num - 1))){
-        connection->current_position++;
         has_preset_record_t *preset = &has_preset_records[connection->current_position];
-
         if (preset->index != HAS_PRESET_RECORD_INVALID_INDEX) {
             preset_found = true;
             connection->num_presets_already_read++;
             *is_last_preset = (connection->num_presets_to_read == connection->num_presets_already_read) || (has_preset_records_num == connection->num_presets_already_read);
             return &has_preset_records[connection->current_position];
         }
+        connection->current_position++;
     }
     return NULL;
 }
@@ -1075,6 +1076,8 @@ static void has_server_can_send_now(void * context) {
 
         att_server_indicate(connection->con_handle, has_control_point_value_handle, &value[0], pos);
 
+        has_clear_preset_record(preset);
+        has_preset_records_num--;
     } else if (preset->scheduled_task == HAS_NOTIFICATION_TASK_PRESET_RECORD_AVAILABLE) {
         connection->scheduled_preset_record_change_notification = false;
 
@@ -1139,10 +1142,6 @@ static void has_server_can_send_now(void * context) {
     }
     // we are done
     preset->scheduled_task = 0;
-
-    if (has_queued_preset_records_num > 0){
-        has_server_schedule_preset_record_task();
-    }
 }
 
 
@@ -1243,17 +1242,24 @@ uint8_t hearing_access_service_server_delete_preset(uint8_t index){
     if (status != ERROR_CODE_SUCCESS){
         return status;
     }
-
-    has_clear_preset_record(preset);
     preset->scheduled_task = HAS_NOTIFICATION_TASK_PRESET_RECORD_DELETED;
-    has_preset_records_num--;
-
     has_server_persist_bitmap_update(index);
     // schedule notifications
     if (!has_server_schedule_preset_record_task()){
         preset->scheduled_task = 0;
     }
+    return ERROR_CODE_SUCCESS;
+}
 
+uint8_t hearing_access_service_server_delete_all_presets(void){
+    uint8_t index;
+    uint8_t status;
+    for (index = 0; index < has_preset_records_max_num; index++){
+        hearing_access_service_server_delete_preset(index);
+        if ((status != ERROR_CODE_SUCCESS) && (status != ERROR_CODE_INVALID_HCI_COMMAND_PARAMETERS)){
+            return status;
+        }
+    }
     return ERROR_CODE_SUCCESS;
 }
 
