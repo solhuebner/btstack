@@ -92,7 +92,7 @@ static uint8_t adv_handle = 0;
 
 const uint8_t adv_data_len = sizeof(adv_data);
 
-static const le_extended_advertising_parameters_t extended_params = {
+static le_extended_advertising_parameters_t extended_params = {
         .advertising_event_properties = 1,  // connectable
         .primary_advertising_interval_min = 0x4b0, // 750 ms
         .primary_advertising_interval_max = 0x4b0, // 750 ms
@@ -909,16 +909,19 @@ static void stdin_process(char cmd){
         }
         
         case 'i':
+            extended_params.own_address_type = 0;
             coordinated_set_identification_service_server_set_sirk(CSIS_SIRK_TYPE_PUBLIC, sirk, false);
             coordinated_set_identification_service_server_generate_rsi();
             break;
 
         case 'I':
+            extended_params.own_address_type = 0;
             coordinated_set_identification_service_server_set_sirk(CSIS_SIRK_TYPE_ENCRYPTED, sirk, false);
             coordinated_set_identification_service_server_generate_rsi();
             break;
 
         case 'j':
+            extended_params.own_address_type = 1;
             gap_random_address_set_mode(GAP_RANDOM_ADDRESS_RESOLVABLE);
             coordinated_set_identification_service_server_set_sirk(CSIS_SIRK_TYPE_PUBLIC, sirk, false);
             coordinated_set_identification_service_server_generate_rsi();
