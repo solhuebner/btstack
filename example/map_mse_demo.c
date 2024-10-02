@@ -77,6 +77,17 @@
 #define MAP_PRINTF printf
 #endif
 
+// function pointers to some test case management functions
+struct test_set_config {
+    void (*fp_init_test_cases)(struct test_set_config* cfg);
+    void (*fp_next_test_case)(struct test_set_config* cfg);
+    void (*fp_previous_test_case)(struct test_set_config* cfg);
+    void (*fp_select_test_case_n)(struct test_set_config* cfg, uint8_t n);
+    void (*fp_print_test_config)(struct test_set_config* cfg);
+    void (*fp_print_test_cases)(struct test_set_config* cfg);
+    void (*fp_print_test_case_help)(struct test_set_config* cfg);
+};
+
 static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 static void mns_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 
