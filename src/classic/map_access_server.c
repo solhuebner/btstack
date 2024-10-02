@@ -117,6 +117,7 @@ static  btstack_packet_handler_t map_server_user_packet_handler;
 static inline void read_arr(uint8_t* buffer, int position, uint8_t* arr, size_t size) { memcpy(arr, &buffer[position], size); }
 static inline void store_arr(uint8_t* buffer, uint16_t position, uint8_t* arr, size_t size) { memcpy(&buffer[position], arr, size); }
 
+
 /**
  * @brief Bluetooth SIG Central<>Peripheral APP-PARAMETER messaging (Big Endian)1
  */
@@ -131,6 +132,26 @@ static inline void store_arr(uint8_t* buffer, uint16_t position, uint8_t* arr, s
 #define BT_APP_PARAM_READ_24( buffer, ppos, pvalue, size)	{ uint16_t tpos = *ppos; *pvalue = big_endian_read_24(buffer, tpos);              log_app_messaging("BT_APP_PARAM_READ_24: pos:%u %s:%u (0x%04X)"          ,tpos, #pvalue, (unsigned int)*pvalue, (unsigned int)*pvalue); *ppos += 3; }
 #define BT_APP_PARAM_READ_32( buffer, ppos, pvalue, size)	{ uint16_t tpos = *ppos; *pvalue = big_endian_read_32(buffer, tpos);              log_app_messaging("BT_APP_PARAM_READ_32: pos:%u %s:%u (0x%04X)"          ,tpos, #pvalue, (unsigned int)*pvalue, (unsigned int)*pvalue); *ppos += 4; }
 #define BT_APP_PARAM_READ_ARR(buffer, ppos, pvalue, size)   { uint16_t tpos = *ppos;          read_arr(buffer, tpos, (uint8_t*)pvalue, size); log_app_messaging("BT_APP_PARAM_READ_ARR: pos:%u %s:<%s>"                ,tpos, #pvalue, pvalue);                                       *ppos += size; }
+
+#define app_param_read_uint8_t              BT_APP_PARAM_READ_08
+#define app_param_read_uint16_t             BT_APP_PARAM_READ_16
+#define app_param_read_uint32_t             BT_APP_PARAM_READ_32
+#define app_param_read_mas_string_t         BT_APP_PARAM_READ_ARR
+#define app_param_read_mas_string_t         BT_APP_PARAM_READ_ARR
+#define app_param_read_mas_UTCstmpoffstr_t  BT_APP_PARAM_READ_ARR
+#define app_param_read_mas_uint64_t         BT_APP_PARAM_READ_ARR
+#define app_param_read_mas_uint64hex_t      BT_APP_PARAM_READ_ARR
+#define app_param_read_mas_uint128hex_t     BT_APP_PARAM_READ_ARR
+
+#define app_param_write_uint8_t             BT_APP_PARAM_WRITE_08
+#define app_param_write_uint16_t            BT_APP_PARAM_WRITE_16
+#define app_param_write_uint32_t            BT_APP_PARAM_WRITE_32
+#define app_param_write_mas_string_t        BT_APP_PARAM_WRITE_ARR
+#define app_param_write_mas_UTCstmpoffstr_t BT_APP_PARAM_WRITE_ARR
+#define app_param_write_mas_utf8_t          BT_APP_PARAM_WRITE_ARR
+#define app_param_write_mas_uint64_t        BT_APP_PARAM_WRITE_ARR
+#define app_param_write_mas_uint64hex_t     BT_APP_PARAM_WRITE_ARR
+#define app_param_write_mas_uint128hex_t    BT_APP_PARAM_WRITE_ARR
 
 typedef struct {
 // the following X-Macro (https://en.wikipedia.org/wiki/X_macro)
@@ -277,15 +298,15 @@ static mas_folder_t map_server_get_folder_by_path(char* path) {
     return map_server_folders[idx].dir;
 }
 
-const char* map_server_get_folder_MsgListingDir(char* path) {
+const char* map_access_server_get_folder_message_listing_direction(char* path) {
     int idx = get_index_for_path(path);
     log_debug("path:%s idx:%u msglistingdir:%s", path, idx, map_server_folders[idx].msglistingdir);
     return map_server_folders[idx].msglistingdir;
 }
 
-const char* map_server_get_folder_MsgListingSent(char* path) {
+const char* map_access_server_get_folder_message_listing_sent(char* path) {
     int idx = get_index_for_path(path);
-    log_debug("path:%s idx:%u MsgListingSent:%s", path, idx, map_server_folders[idx].msglistingdir);
+    log_debug("path:%s idx:%u MsgListingSent:%s", path, idx, map_server_folders[idx].msglistingsent);
     return map_server_folders[idx].msglistingsent;
 }
 
@@ -1202,7 +1223,7 @@ static void map_server_packet_handler(uint8_t packet_type, uint16_t channel, uin
     }
 }
 
-void map_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm, uint16_t mtu) {
+void map_access_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm, uint16_t mtu) {
     //maximum_obex_packet_length = mtu;
     goep_server_register_service(&map_server_packet_handler, rfcomm_channel_nr, 0xFFFF, l2cap_psm, 0xFFFF, LEVEL_0);
 
@@ -1229,7 +1250,7 @@ static bool map_server_valid_header_for_request(map_server_t* mas) {
 }
 
 
-int map_server_set_response_app_param(uint16_t map_cid, enum MAP_APP_PARAMS app_param, void* param) {
+int map_access_server_set_response_app_param(uint16_t map_cid, enum MAP_APP_PARAMS app_param, void* param) {
     map_server_t* mas = map_server_for_goep_cid(map_cid);
     size_t len;
 
@@ -1291,7 +1312,7 @@ static void map_server_build_response(map_server_t* mas) {
 #define OBEX_SIZE_SRM 2
 
 // TODO: currently a lot of heuristics/hard coded to determine the available body space - should reflect the real packet created later
-uint16_t map_server_get_max_body_size(uint16_t map_cid) {
+uint16_t map_access_server_get_max_body_size(uint16_t map_cid) {
     map_server_t* mas = map_server_for_goep_cid(map_cid);
 
     //btstack_assert(mas->request.object_type != MAP_OBJECT_TYPE_INVALID);
@@ -1313,7 +1334,7 @@ uint16_t map_server_get_max_body_size(uint16_t map_cid) {
     return goep_max_message_size - 3 - 2 - 3 - 3 - mas->response.header_pos - hdr_name_len - hdr_type_len;
 }
 
-void map_server_set_response_type_and_name(uint16_t map_cid, char* hdr_name, char* type_name, bool SRMP_wait) {
+void map_access_server_set_response_type_and_name(uint16_t map_cid, char* hdr_name, char* type_name, bool SRMP_wait) {
     map_server_t* mas = map_server_for_goep_cid(map_cid);
     if (mas == NULL) {
         return;
@@ -1325,7 +1346,7 @@ void map_server_set_response_type_and_name(uint16_t map_cid, char* hdr_name, cha
     mas->response.hdr_finalized = true;
 }
 
-uint16_t map_server_send_response_with_body(uint16_t map_cid, uint8_t response_code, uint32_t continuation, size_t body_len, const uint8_t* body) {
+uint16_t map_access_server_send_response_with_body(uint16_t map_cid, uint8_t response_code, uint32_t continuation, size_t body_len, const uint8_t* body) {
     map_server_t* mas = map_server_for_goep_cid(map_cid);
 
     if (mas == NULL) {
@@ -1338,7 +1359,7 @@ uint16_t map_server_send_response_with_body(uint16_t map_cid, uint8_t response_c
     // double check size
 
     // calc max body size without reserving outgoing buffer: packet size - OBEX Header (3) - SRM Header (2) - Body Header (3)
-    uint16_t max_body_size = map_server_get_max_body_size(mas->goep_cid);
+    uint16_t max_body_size = map_access_server_get_max_body_size(mas->goep_cid);
     if (body_len > max_body_size) {
         return ERROR_CODE_MEMORY_CAPACITY_EXCEEDED;
     }
@@ -1357,6 +1378,6 @@ uint16_t map_server_send_response_with_body(uint16_t map_cid, uint8_t response_c
     return goep_server_request_can_send_now(mas->goep_cid);
 }
 
-uint16_t map_server_send_response(uint16_t map_cid, uint8_t response_code) {
-    return map_server_send_response_with_body(map_cid, response_code, 0, 0, NULL);
+uint16_t map_access_server_send_response(uint16_t map_cid, uint8_t response_code) {
+    return map_access_server_send_response_with_body(map_cid, response_code, 0, 0, NULL);
 }

@@ -85,27 +85,6 @@ typedef uint8_t mas_uint64_t[8];
 typedef uint8_t mas_uint64hex_t[16+1]; // \0 terminated?
 typedef uint8_t mas_UTCstmpoffstr_t[20];
 
-
-#define app_param_read_uint8_t              BT_APP_PARAM_READ_08
-#define app_param_read_uint16_t             BT_APP_PARAM_READ_16
-#define app_param_read_uint32_t             BT_APP_PARAM_READ_32
-#define app_param_read_mas_string_t         BT_APP_PARAM_READ_ARR
-#define app_param_read_mas_string_t         BT_APP_PARAM_READ_ARR
-#define app_param_read_mas_UTCstmpoffstr_t  BT_APP_PARAM_READ_ARR
-#define app_param_read_mas_uint64_t         BT_APP_PARAM_READ_ARR
-#define app_param_read_mas_uint64hex_t      BT_APP_PARAM_READ_ARR
-#define app_param_read_mas_uint128hex_t     BT_APP_PARAM_READ_ARR
-                                            
-#define app_param_write_uint8_t             BT_APP_PARAM_WRITE_08
-#define app_param_write_uint16_t            BT_APP_PARAM_WRITE_16
-#define app_param_write_uint32_t            BT_APP_PARAM_WRITE_32
-#define app_param_write_mas_string_t        BT_APP_PARAM_WRITE_ARR
-#define app_param_write_mas_UTCstmpoffstr_t BT_APP_PARAM_WRITE_ARR
-#define app_param_write_mas_utf8_t          BT_APP_PARAM_WRITE_ARR 
-#define app_param_write_mas_uint64_t        BT_APP_PARAM_WRITE_ARR 
-#define app_param_write_mas_uint64hex_t     BT_APP_PARAM_WRITE_ARR 
-#define app_param_write_mas_uint128hex_t    BT_APP_PARAM_WRITE_ARR 
-
 // APP_PARAM options
 #define NO_OPTS  0x00 // no option set
 #define OPT_STR0 0x01 // \0 terminated sring with max size
@@ -118,9 +97,9 @@ typedef uint8_t mas_UTCstmpoffstr_t[20];
 
     // the following X-Macro (https://en.wikipedia.org/wiki/X_macro)
     // below is a compact storage of all BT SIG MAS supported ApplicationParameters
-    // for both Requests and Responses. Unused parameters dont use any run-time ressources
+    // for both Requests and Responses. Unused parameters dont use any run-time resources
     // but are declared and compile-time checked as well but
-    // 
+    //
     //  PARAM_xyz( Parameter_Name                , Tag , Type               , OPTS(STR0), DSCR( free text description ... no coma ... multiple _backslash_no_space lines ... )
 #define APP_PARAMS \
  PARAM_REQUST( MaxListCount                      , 0x01, uint16_t           , NO_OPTS   , DSCR( 0000 to 0xFFFF                                                                  ))\
@@ -373,18 +352,77 @@ typedef enum {
     MAS_FOLDER_MAX,
 } mas_folder_t;
 
-int map_server_set_response_app_param(uint16_t map_cid, enum MAP_APP_PARAMS app_param, void* param);
-uint16_t map_server_send_response_with_body(uint16_t map_cid, uint8_t response_code, uint32_t continuation, size_t body_len, const uint8_t* body);
-uint16_t map_server_send_response(uint16_t map_cid, uint8_t response_code);
-uint16_t map_server_get_max_body_size(uint16_t map_cid);
-void map_server_set_response_type_and_name(uint16_t map_cid, char* hdr_name, char* type_name, bool SRMP_wait);
-int map_server_set_response_app_param(uint16_t map_cid, enum MAP_APP_PARAMS app_param, void* param);
-void map_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm, uint16_t mtu);
-
 enum msg_status_read { no, yes };
 
-const char* map_server_get_folder_MsgListingDir(char* path);
-const char* map_server_get_folder_MsgListingSent(char* path);
+/**
+ * @brief Init MAP Access Server
+ * @param packet_handler
+ * @param rfcomm_channel_nr
+ * @param l2cap_psm
+ * @param mtu
+ */
+void map_access_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm, uint16_t mtu);
+
+/**
+ * @brief Set app param for response
+ * @note Only one response can be prepared in parallel
+ * @param map_cid
+ * @param app_param
+ * @param param
+ * @return
+ */
+int map_access_server_set_response_app_param(uint16_t map_cid, enum MAP_APP_PARAMS app_param, void* param);
+
+/**
+ * @brief Set Name, Type and SRMP Wait flag for response
+ * @param map_cid
+ * @param hdr_name
+ * @param type_name
+ * @param SRMP_wait
+ */
+void map_access_server_set_response_type_and_name(uint16_t map_cid, char* hdr_name, char* type_name, bool SRMP_wait);
+
+/**
+ * @brief Get max size for body
+ * @note should be called after setting app params to get actual max body size
+ * @param map_cid
+ * @return
+ */
+uint16_t map_access_server_get_max_body_size(uint16_t map_cid);
+
+/**
+ * @brief Send response without body
+ * @param map_cid
+ * @param response_code
+ * @return
+ */
+uint16_t map_access_server_send_response(uint16_t map_cid, uint8_t response_code);
+
+/**
+ * @brief Send response with provided body. Body will be sent in multiple OBEX messages if needed
+ * @param map_cid
+ * @param response_code
+ * @param continuation provided in next event for next get request
+ * @param body_len
+ * @param body
+ * @return
+ */
+uint16_t map_access_server_send_response_with_body(uint16_t map_cid, uint8_t response_code, uint32_t continuation, size_t body_len, const uint8_t* body);
+
+/**
+ * @brief Get description for message direction for a given folder path
+ * @param path
+ * @return
+ */
+
+const char* map_access_server_get_folder_message_listing_direction(char* path);
+
+/**
+ * @brief Get description for sent flag for a given folder path
+ * @param path
+ * @return
+ */
+const char* map_access_server_get_folder_message_listing_sent(char* path);
 
 
 #if defined __cplusplus
