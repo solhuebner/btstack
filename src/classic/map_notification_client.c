@@ -162,6 +162,12 @@ static void map_notification_client_parser_callback_connect(void* user_data, uin
 }
 
 static void map_notification_client_parser_callback_put_operation(void* user_data, uint8_t header_id, uint16_t total_len, uint16_t data_offset, const uint8_t* data_buffer, uint16_t data_len) {
+    UNUSED(user_data);
+    UNUSED(total_len);
+    UNUSED(data_offset);
+    UNUSED(data_buffer);
+    UNUSED(data_len);
+
     map_notification_client_t* mnc = (map_notification_client_t*)user_data;
     switch (header_id) {
         case OBEX_HEADER_BODY:

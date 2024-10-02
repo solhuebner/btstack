@@ -163,8 +163,10 @@ static void map_notification_server_reset_request (map_notification_server_t *mn
 /* OBEX related functions */
 
 static void map_notification_server_app_param_callback (void * user_data, uint8_t tag_id, uint8_t total_len, uint8_t data_offset, const uint8_t * data_buffer, uint8_t data_len){
+    UNUSED(user_data);
     UNUSED(total_len);
     UNUSED(data_offset);
+    UNUSED(data_buffer);
     UNUSED(data_len);
     //map_notification_server_t *mns = (map_notification_server_t *) user_data;
 
