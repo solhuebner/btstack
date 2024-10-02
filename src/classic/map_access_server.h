@@ -177,7 +177,7 @@ typedef uint8_t mas_UTCstmpoffstr_t[20];
                                                                                           ENUM(      1 << 13 , MessageExtendedDataChanged   )                                     \
                                                                                           ENUM(      1 << 14 , MessageRemoved               )                                     \
                                                                                           ENUM(   N_BITS(15) , AllNotifications             )                                     \
-                                                                                          ENUM(0x1FFFF << 15 , Reserved_Mask                )                                    )\
+                                                                                          ENUM(((int)(0xFFFF << 15)), Reserved_Mask                )                                    )\
  PARAM_UNUSED( ConvParameterMask                 , 0x26, uint32_t           , NO_OPTS   , DSCR( Bit mask settings; see Section 5.13.3.10                                        ))\
  PARAM_RESPON( OwnerUCI                          , 0x27, mas_utf8_t         , OPT_STR0  , DSCR( Text UTF - 8                                                                    ))\
  PARAM_UNUSED( ExtendedData                      , 0x28, mas_utf8_t         , NO_OPTS   , DSCR( Text UTF - 8                                                                    ))\
@@ -359,9 +359,8 @@ enum msg_status_read { no, yes };
  * @param packet_handler
  * @param rfcomm_channel_nr
  * @param l2cap_psm
- * @param mtu
  */
-void map_access_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm, uint16_t mtu);
+void map_access_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm);
 
 /**
  * @brief Set app param for response

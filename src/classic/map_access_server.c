@@ -275,14 +275,6 @@ static map_server_t* map_server_for_goep_cid(uint16_t goep_cid) {
     return NULL;
 }
 
-/* only to be called if the GEOP connection is closed
-* if only OBEX connection is closed we need to go to  MAS_STATE_W4_CONNECT_OPCODE
-*/
-static void map_server_finalize_connection(map_server_t* mas) {
-    // minimal
-    mas->state = MAS_STATE_W4_OPEN;
-}
-
 static int get_index_for_path(const char* path) {
     int idx = ARRAYSIZE(map_server_folders) - 1;
     while (idx >= 0 && 0 != strcasecmp(path, map_server_folders[idx].name)) {
@@ -930,8 +922,6 @@ static void map_server_handle_get_or_put_request(map_server_t *mas, bool first_r
     // emit get ( folder, msg_listing, msg)
     hci_event_builder_context_t context;
     uint8_t event[2 + 20 + MAP_SERVER_MAX_NAME_LEN + MAP_SERVER_MAX_SEARCH_VALUE_LEN];
-    uint16_t pos = 0;
-    pos = 2; // skip size header, its written at the end
     mas->state = MAS_STATE_W4_USER_DATA;
     switch (mas->request.object_type) {
 
@@ -1223,8 +1213,7 @@ static void map_server_packet_handler(uint8_t packet_type, uint16_t channel, uin
     }
 }
 
-void map_access_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm, uint16_t mtu) {
-    //maximum_obex_packet_length = mtu;
+void map_access_server_init(btstack_packet_handler_t packet_handler, uint8_t rfcomm_channel_nr, uint16_t l2cap_psm) {
     goep_server_register_service(&map_server_packet_handler, rfcomm_channel_nr, 0xFFFF, l2cap_psm, 0xFFFF, LEVEL_0);
 
     map_server_user_packet_handler = packet_handler;
