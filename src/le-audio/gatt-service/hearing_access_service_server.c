@@ -113,6 +113,7 @@ static void has_server_can_send_now(void * context);
 
 static has_preset_record_t * preset_change_iterator_get_next(has_server_connection_t * connection, bool * is_last_preset, uint8_t * prev_index){
     // check if it is initial value
+    *is_last_preset = true;
     if (connection->preset_change_bitmap_pos == HAS_PRESET_RECORD_INVALID_POSITION) {
         // find first index equal to or greater than start_index
         *prev_index = HAS_PRESET_RECORD_RESERVED_INDEX;
@@ -387,6 +388,7 @@ static void has_server_reset_client(has_server_connection_t * connection){
 }
 
 static has_preset_record_t * has_server_preset_iterator_get_next(has_server_connection_t * connection, bool * is_last_preset){
+    *is_last_preset = true;
     // check if it is initial value
     if (connection->current_position == HAS_PRESET_RECORD_INVALID_POSITION) {
         // find first index equal to or greater than start_index
@@ -414,6 +416,7 @@ static has_preset_record_t *
 has_read_presets_operation_get_changed_preset_record(bool *is_last_preset, uint8_t *prev_index) {
     uint8_t num_presets_already_read = 0;
     *prev_index = HAS_PRESET_RECORD_RESERVED_INDEX;
+    *is_last_preset = true;
     uint8_t i;
     for (i = 0; i < has_preset_records_max_num; i++){
         has_preset_record_t *preset = &has_preset_records[i];
@@ -421,7 +424,7 @@ has_read_presets_operation_get_changed_preset_record(bool *is_last_preset, uint8
             num_presets_already_read++;
 
             if (preset->scheduled_task > 0u) {
-                *is_last_preset = (has_preset_records_num == num_presets_already_read);
+                *is_last_preset = has_preset_records_num == num_presets_already_read;
                 return preset;
             }
             *prev_index = i;
@@ -1036,8 +1039,6 @@ static void has_server_can_send_now(void * context) {
         return;
     }
 
-    // avoid uninitialized warning
-    prev_index = 0;
     preset = has_read_presets_operation_get_changed_preset_record(&is_last_preset_record, &prev_index);
     if (!preset){
         return;
