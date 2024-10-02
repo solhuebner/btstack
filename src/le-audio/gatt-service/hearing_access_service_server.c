@@ -1255,7 +1255,7 @@ uint8_t hearing_access_service_server_delete_all_presets(void){
     uint8_t index;
     uint8_t status;
     for (index = 0; index < has_preset_records_max_num; index++){
-        hearing_access_service_server_delete_preset(index);
+        status = hearing_access_service_server_delete_preset(index);
         if ((status != ERROR_CODE_SUCCESS) && (status != ERROR_CODE_INVALID_HCI_COMMAND_PARAMETERS)){
             return status;
         }
