@@ -488,7 +488,7 @@ static void run_for_server(server_t * server){
                 ascs_codec_configuration_request.specific_codec_configuration.audio_channel_allocation_mask = server->sink_channel_allocation;
             }
             ascs_codec_configuration_request.specific_codec_configuration.octets_per_codec_frame = codec_configurations[menu_sampling_frequency].variants[menu_variant].octets_per_frame;
-            ascs_codec_configuration_request.specific_codec_configuration.codec_frame_blocks_per_sdu = num_channels;
+            ascs_codec_configuration_request.specific_codec_configuration.codec_frame_blocks_per_sdu = 1;
             status = audio_stream_control_service_client_streamendpoint_configure_codec(server->ascs_cid, ase_id, &ascs_codec_configuration_request);
             server->server_state = SERVER_ASCS_W4_CODEC_CONFIGURED;
             btstack_assert(status == ERROR_CODE_SUCCESS);
@@ -1207,14 +1207,15 @@ static void pacs_client_event_handler(uint8_t packet_type, uint16_t channel, uin
                     server->server_state = SERVER_PACS_W4_AVAILABLE_CONTEXTS;
                     status = published_audio_capabilities_service_client_get_available_audio_contexts(server->pacs_cid);
                     UNUSED(status);
+                    break;
                 case SERVER_PACS_W4_AVAILABLE_CONTEXTS:
-                    printf("PACS Client %u: Get sink pacs\n", server->server_id);
+                    printf("PACS Client %u: Get Sink PAC Records\n", server->server_id);
                     server->server_state = SERVER_PACS_W4_SINK_PACS;
                     status = published_audio_capabilities_service_client_get_sink_pacs(server->pacs_cid);
                     UNUSED(status);
                     break;
                 case SERVER_PACS_W4_SINK_PACS:
-                    printf("PACS Client %u: Get source pacs\n", server->server_id);
+                    printf("PACS Client %u: Get Source PAC Record\n", server->server_id);
                     server->server_state = SERVER_PACS_W4_SOURCE_PACS;
                     status = published_audio_capabilities_service_client_get_source_pacs(server->pacs_cid);
                     UNUSED(status);
