@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 #define PACS_CLIENT_MAX_ATT_BUFFER_SIZE             512
-#define PACS_ENDPOINT_MAX_NUM                        10
+#define PACS_ENDPOINT_MAX_NUM                        20
 
 /* API_START */
 typedef enum {
