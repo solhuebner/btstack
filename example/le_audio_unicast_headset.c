@@ -850,7 +850,7 @@ static void app_configure(uint8_t option) {
     const char * filenames[] = { "stereo", "front_left", "front_right", "front_center", "back_left", "back_right"};
     static char filename[128];
 
-    snprintf(filename, sizeof(filename), "headset_%s.wav", filenames[channel_id]);
+    btstack_snprintf_assert_complete(filename, sizeof(filename), "headset_%s.wav", filenames[channel_id]);
     printf("Store WAV in %s\n", filename);
 
     uint8_t set_rank;
