@@ -528,9 +528,9 @@ static int gen_event_report(char* buf, int maxsize, int index)
 
     int pos = 0;
 
-    pos += snprintf(&buf[pos], maxsize - pos, "%s", evt_cfg->type->header);
-    pos += snprintf(&buf[pos], maxsize - pos, evt_cfg->type->body, evt_cfg->objects[index]);
-    pos += snprintf(&buf[pos], maxsize - pos, "%s", evt_cfg->type->footer);
+    pos += btstack_snprintf_assert_complete(&buf[pos], maxsize - pos, "%s", evt_cfg->type->header);
+    pos += btstack_snprintf_assert_complete(&buf[pos], maxsize - pos, evt_cfg->type->body, evt_cfg->objects[index]);
+    pos += btstack_snprintf_assert_complete(&buf[pos], maxsize - pos, "%s", evt_cfg->type->footer);
 
     return pos;
 }
@@ -557,7 +557,7 @@ static size_t PRINT_bmessage(char* msg_buffer, uint16_t index, size_t maxsize) {
     index = index % ARRAYSIZE(mas_cfg->objects);
     int size = 0;
     if (!mas_cfg->msg_deleted[index] || folder_msg_deleted)
-        size = snprintf(msg_buffer, maxsize,
+        size = btstack_snprintf_assert_complete(msg_buffer, maxsize,
             "BEGIN:BMSG\r\n"
             "VERSION:1.0\r\n"
             "STATUS:%s\r\n"
@@ -596,7 +596,7 @@ static size_t body_msg(char* msg_buffer, uint16_t index, size_t maxsize) {
     index = index % ARRAYSIZE(mas_cfg->objects);
     int size = 0;
     if (!mas_cfg->msg_deleted[index] || folder_msg_deleted)
-        size = snprintf(msg_buffer, maxsize,
+        size = btstack_snprintf_assert_complete(msg_buffer, maxsize,
                         "<msg handle=\"A%X\""
             " type=\"%s\""
             " read=\"%s\""
@@ -626,7 +626,7 @@ static size_t body_msg_short(char* msg_buffer, uint16_t index, size_t maxsize) {
     index = index % ARRAYSIZE(mas_cfg->objects);
     int size = 0;
     if (!mas_cfg->msg_deleted[index] || folder_msg_deleted)
-        size = snprintf(msg_buffer, maxsize,
+        size = btstack_snprintf_assert_complete(msg_buffer, maxsize,
             "<msg handle=\"A%X\""
             " type=\"%s\""
             " subject=\"Sbjct\""
@@ -651,7 +651,7 @@ static size_t body_msg_email_1_1(char* msg_buffer, uint16_t index, size_t maxsiz
     index = index % ARRAYSIZE(mas_cfg->objects);
     int size = 0;
     if (!mas_cfg->msg_deleted[index] || folder_msg_deleted)
-        size = snprintf(msg_buffer, maxsize,
+        size = btstack_snprintf_assert_complete(msg_buffer, maxsize,
             "<event type = \"NewMessage\" handle=\"0123456789000001\" folder=\"TELECOM/MSG/OUTBOX\" msg_type=\"%s\" subject=\"Subject\" datetime=\"20130121T130510\" sender_name=\"Xyz\" priority=\"no\"/>",
             mas_cfg->objects[index]
         );
@@ -661,7 +661,7 @@ static size_t body_msg_email_1_1(char* msg_buffer, uint16_t index, size_t maxsiz
 static size_t body_convo(char* msg_buffer, uint16_t index, size_t maxsize) {
     static int version = 0, size = 0;
     // Implement the function to create a conversation
-    size = snprintf(msg_buffer, maxsize,
+    size = btstack_snprintf_assert_complete(msg_buffer, maxsize,
         "<?xml version=\"1.0\" encoding= \"UTF-8\"?>"
         "<conversation id=\"E1E2E3E4F1F2F3F4A1A2A3A4B1B2B3%02X\" name=\"%s\""
         // optional fields and elements
@@ -699,7 +699,7 @@ static size_t create_obex_body(struct objconfig_s* type, uint16_t first, uint16_
     OBEX_body_object[0] = 0;
     
     // header
-    len = snprintf((char *) &OBEX_body_object[pos], size, "%s", type->header);
+    len = btstack_snprintf_assert_complete((char *) &OBEX_body_object[pos], size, "%s", type->header);
     pos += len; size -= len;
     
     while ((size > 0) && (first < last)){        
@@ -713,7 +713,7 @@ static size_t create_obex_body(struct objconfig_s* type, uint16_t first, uint16_
     log_debug("4 first:%d last:%d pos:%d size:%d <%s>", first, last, pos, size, OBEX_body_object);
 
     // footer
-    len = snprintf((char*) &OBEX_body_object[pos], size, "%s",type->footer);
+    len = btstack_snprintf_assert_complete((char*) &OBEX_body_object[pos], size, "%s",type->footer);
 
     pos += len; size -= len;
 
@@ -1149,7 +1149,7 @@ static void mas_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
 
                             MAP_PRINTF("[+] Put Message Charset:%u Attachment:%u MessageHandle:%s\n", Charset, Attachment, MessageHandle);
                             char new_handle[3]; // A0\0
-                            snprintf(new_handle, sizeof(new_handle), "A%u", mas_cfg->obj_count + one_object_more_or_less - cfg_start_index);
+                            btstack_snprintf_assert_complete(new_handle, sizeof(new_handle), "A%u", mas_cfg->obj_count + one_object_more_or_less - cfg_start_index);
                             map_access_server_set_response_type_and_name(current_map_cid, new_handle, NULL,
                                                                          mas_cfg->SRMP_wait);
                             map_access_server_send_response(current_map_cid,
@@ -1292,7 +1292,7 @@ static void mas_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
 
             char buf[100]; int i;
             for (i = 0; i < size; i++) {
-                snprintf(&buf[3 * i], 4, "%02x ", packet[i]);
+                btstack_snprintf_assert_complete(&buf[3 * i], 4, "%02x ", packet[i]);
             }
             //buf[3 * i] = 0;
             log_debug("MAP_DATA_PACKET (%u bytes): %s", size, buf);
