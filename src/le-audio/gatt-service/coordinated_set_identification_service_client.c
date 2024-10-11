@@ -595,7 +595,7 @@ static bool csis_client_handle_query_complete(csis_client_connection_t * connect
         switch (connection->state){
             case COORDINATED_SET_IDENTIFICATION_SERVICE_CLIENT_STATE_W4_SERVICE_RESULT:
             case COORDINATED_SET_IDENTIFICATION_SERVICE_CLIENT_STATE_W4_CHARACTERISTIC_RESULT:
-                csis_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                csis_client_connected(connection, gatt_client_att_status_to_error_code(status));
                 return false;
             default:
                 break;

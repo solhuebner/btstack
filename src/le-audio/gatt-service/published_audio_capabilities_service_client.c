@@ -624,7 +624,7 @@ static bool pacs_client_handle_query_complete(pacs_client_connection_t * connect
 
         case PUBLISHED_AUDIO_CAPABILITIES_SERVICE_CLIENT_STATE_W4_SERVICE_RESULT:
             if (status != ATT_ERROR_SUCCESS){
-                pacs_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                pacs_client_connected(connection, gatt_client_att_status_to_error_code(status));
                 return false;
             }
 
@@ -639,7 +639,7 @@ static bool pacs_client_handle_query_complete(pacs_client_connection_t * connect
 
         case PUBLISHED_AUDIO_CAPABILITIES_SERVICE_CLIENT_STATE_W4_CHARACTERISTIC_RESULT:
             if (status != ATT_ERROR_SUCCESS){
-                pacs_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                pacs_client_connected(connection, gatt_client_att_status_to_error_code(status));
                 return false;
             }
             

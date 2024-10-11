@@ -619,7 +619,7 @@ static bool ascs_client_handle_query_complete(ascs_client_connection_t * connect
         switch (connection->state){
             case AUDIO_STREAM_CONTROL_SERVICE_CLIENT_STATE_W4_SERVICE_RESULT:
             case AUDIO_STREAM_CONTROL_SERVICE_CLIENT_STATE_W4_CHARACTERISTIC_RESULT:
-                ascs_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                ascs_client_connected(connection, gatt_client_att_status_to_error_code(status));
                 return false;
             default:
                 break;

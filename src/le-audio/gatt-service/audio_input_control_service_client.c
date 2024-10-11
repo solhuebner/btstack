@@ -539,7 +539,7 @@ static void aics_client_handle_gatt_client_event(uint8_t packet_type, uint16_t c
                     break;
                 
                 case AUDIO_INPUT_CONTROL_SERVICE_CLIENT_STATE_W4_CHANGE_COUNTER_RESULT:
-                    aics_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                    aics_client_connected(connection, gatt_client_att_status_to_error_code(status));
                     break;
 
                 default:

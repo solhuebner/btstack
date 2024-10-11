@@ -827,7 +827,7 @@ static void ots_client_handle_gatt_client_event(uint8_t packet_type, uint16_t ch
                     break;
 
                 case OBJECT_TRANSFER_SERVICE_CLIENT_STATE_W4_OTS_FEATURES_RESULT:
-                    ots_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                    ots_client_connected(connection, gatt_client_att_status_to_error_code(status));
                     break;
 
                 case OBJECT_TRANSFER_SERVICE_CLIENT_STATE_W4_READ_LONG_CHARACTERISTIC_VALUE_RESULT:

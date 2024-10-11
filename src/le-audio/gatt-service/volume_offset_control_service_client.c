@@ -499,7 +499,7 @@ static void vocs_client_handle_gatt_client_event(uint8_t packet_type, uint16_t c
 #ifdef ENABLE_TESTING_SUPPORT
                     printf("VOCS Client: connected, change counter initialized to %d\n", connection->change_counter);
 #endif              
-                    vocs_client_connected(connection, gatt_service_client_att_status_to_error_code(status));
+                    vocs_client_connected(connection, gatt_client_att_status_to_error_code(status));
                     break;
                 default:
                     break;
