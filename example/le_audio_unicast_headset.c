@@ -162,7 +162,7 @@ static pacs_record_t sink_pac_records[] = {
             LE_AUDIO_CODEC_AUDIO_CHANNEL_COUNT_MASK_2,
             26,
             155,
-            2
+            1
         },
         // metadata length
         45,
