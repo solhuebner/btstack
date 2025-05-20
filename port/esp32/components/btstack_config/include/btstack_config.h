@@ -17,8 +17,10 @@
 
 #define HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
 
-// HCI Controller to Host Flow Control
+#if defined(CONFIG_BTSTACK_INTERNAL_BT)
+// HCI Controller to Host Flow Control - required for VHCI
 #define ENABLE_HCI_CONTROLLER_TO_HOST_FLOW_CONTROL
+#endif
 
 // BTstack features that can be enabled
 #define ENABLE_LOG_ERROR
