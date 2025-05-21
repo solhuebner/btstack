@@ -103,20 +103,24 @@
 // ACL buffer large enough for Ethernet frame in BNEP/PAN
 #define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
 
+#ifdef ENABLE_HCI_CONTROLLER_TO_HOST_FLOW_CONTROL
 #define HCI_HOST_ACL_PACKET_LEN 1024
 #define HCI_HOST_ACL_PACKET_NUM 20
 #define HCI_HOST_SCO_PACKET_LEN 60
 #define HCI_HOST_SCO_PACKET_NUM 10
+#endif
 
 #else
 
 // ACL buffer large enough to allow for 512 byte Characteristic
 #define HCI_ACL_PAYLOAD_SIZE (512 + 4 + 3)
 
+#ifdef ENABLE_HCI_CONTROLLER_TO_HOST_FLOW_CONTROL
 #define HCI_HOST_ACL_PACKET_LEN HCI_ACL_PAYLOAD_SIZE
 #define HCI_HOST_ACL_PACKET_NUM 20
 #define HCI_HOST_SCO_PACKET_LEN 0
 #define HCI_HOST_SCO_PACKET_NUM 0
+#endif
 
 #endif
 
