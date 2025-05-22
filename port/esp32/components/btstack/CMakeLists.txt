@@ -86,6 +86,8 @@ else()
     list(APPEND exclude_srcs "btstack_audio_esp32_v4.c" "btstack_audio_esp32_v5.c")
 endif()
 
+message("${exclude_srcs}")
+
 if(CONFIG_ESP_HOSTED_ENABLE_BT_BLUEDROID)
     list(APPEND exclude_srcs "btstack_transport_vhci.c")
 else()
