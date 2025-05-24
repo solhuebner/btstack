@@ -25,7 +25,7 @@ endif()
 
 idf_component_register(
     SRCS "main.c" "${EXAMPLE_SOURCE}"
-    REQUIRES btstack esp_phy bt)
+    REQUIRES btstack esp_phy bt esp_driver_gpio esp_driver_i2s)
 
 include(BTstackUtils)
 
