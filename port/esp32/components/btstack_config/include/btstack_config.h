@@ -44,8 +44,6 @@
 
 #define ENABLE_HFP_WIDE_BAND_SPEECH
 
-#define ENABLE_SCO_OVER_HCI
-
 // mainly needed for AVRCP Browsing, can be removed otherwise to reduce code size
 #define ENABLE_L2CAP_ENHANCED_RETRANSMISSION_MODE
 

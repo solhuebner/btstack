@@ -361,10 +361,6 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     switch(hci_event_packet_get_type(packet)){
         case BTSTACK_EVENT_STATE:
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-#ifdef ENABLE_SCO_OVER_HCI
-                esp_err_t ret = esp_bredr_sco_datapath_set(ESP_SCO_DATA_PATH_HCI);
-                log_info("transport: configure SCO over HCI, result 0x%04x", ret);
-#endif
                 bd_addr_t addr;
                 gap_local_bd_addr(addr);
                 printf("BTstack up and running at %s\n",  bd_addr_to_str(addr));
