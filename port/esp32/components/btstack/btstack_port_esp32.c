@@ -47,6 +47,8 @@
 #include <string.h>
 
 #include "btstack_config.h"
+#include "bluetooth_company_id.h"
+#include "btstack_chipset_zephyr.h"
 #include "btstack_event.h"
 #include "btstack_memory.h"
 #include "btstack_run_loop.h"
@@ -94,20 +96,64 @@ uint32_t hal_time_ms(void) {
 }
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
+static bd_addr_t             static_address;
+
+static void local_version_information_handler(uint8_t * packet){
+    printf("Local version information:\n");
+    uint16_t hci_version    = packet[6];
+    uint16_t hci_revision   = little_endian_read_16(packet, 7);
+    uint16_t lmp_version    = packet[9];
+    uint16_t manufacturer   = little_endian_read_16(packet, 10);
+    uint16_t lmp_subversion = little_endian_read_16(packet, 12);
+    printf("- HCI Version    0x%04x\n", hci_version);
+    printf("- HCI Revision   0x%04x\n", hci_revision);
+    printf("- LMP Version    0x%04x\n", lmp_version);
+    printf("- LMP Subversion 0x%04x\n", lmp_subversion);
+    printf("- Manufacturer 0x%04x\n", manufacturer);
+    switch (manufacturer){
+        case BLUETOOTH_COMPANY_ID_NORDIC_SEMICONDUCTOR_ASA:
+            printf("Nordic Semiconductor nRF5 chipset.\n");
+            hci_set_chipset(btstack_chipset_zephyr_instance());
+            break;
+        case BLUETOOTH_COMPANY_ID_ESPRESSIF_INCORPORATED:
+            printf("Espressif SoC.\n");
+            break;
+        default:
+            printf("Unknown manufacturer / manufacturer not supported yet.\n");
+            break;
+    }
+}
 
 static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     if (packet_type != HCI_EVENT_PACKET) return;
+    const uint8_t *params;
+
     switch(hci_event_packet_get_type(packet)){
         case BTSTACK_EVENT_STATE:
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-                bd_addr_t addr;
-                gap_local_bd_addr(addr);
-                printf("BTstack up and running at %s\n",  bd_addr_to_str(addr));
+                bd_addr_t local_addr;
+                gap_local_bd_addr(local_addr);
+                if( btstack_is_null_bd_addr(local_addr) && !btstack_is_null_bd_addr(static_address) ) {
+                    memcpy(local_addr, static_address, sizeof(bd_addr_t));
+                }
+                printf("BTstack up and running at %s\n",  bd_addr_to_str(local_addr));
             }
             break;
         case HCI_EVENT_COMMAND_COMPLETE:
-            if (hci_event_command_complete_get_command_opcode(packet) == HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION){
-                // @TODO
+            switch (hci_event_command_complete_get_command_opcode(packet)){
+                case HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION:
+                    local_version_information_handler(packet);
+                    break;
+                case HCI_OPCODE_HCI_ZEPHYR_READ_STATIC_ADDRESS:
+                    printf("Zephyr read static address available\n");
+                    params = hci_event_command_complete_get_return_parameters(packet);
+                    if((params[0] == 0) && (size >= 13)) {
+                        reverse_48(&params[2], static_address);
+                        gap_random_address_set(static_address);
+                    }
+                    break;
+                default:
+                    break;
             }
             break;
         default:

@@ -29,6 +29,7 @@ set(include_dirs
     ${BTSTACK_ROOT}/3rd-party/md5
     ${BTSTACK_ROOT}/3rd-party/qr-code-generator
     ${BTSTACK_ROOT}/3rd-party/yxml
+    ${BTSTACK_ROOT}/chipset/zephyr
     ${BTSTACK_ROOT}/src/classic
     ${BTSTACK_ROOT}/src/ble/gatt-service
     ${BTSTACK_ROOT}/src/ble
@@ -54,6 +55,7 @@ set(src_dirs
     ${BTSTACK_ROOT}/3rd-party/qr-code-generator
     ${BTSTACK_ROOT}/3rd-party/yxml
     ${BTSTACK_ROOT}/src/ble/gatt-service
+    ${BTSTACK_ROOT}/chipset/zephyr
     ${BTSTACK_ROOT}/src/ble
     ${BTSTACK_ROOT}/src/le-audio
     ${BTSTACK_ROOT}/src/le-audio/gatt-service
