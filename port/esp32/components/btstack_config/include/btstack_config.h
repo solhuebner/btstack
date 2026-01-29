@@ -24,6 +24,7 @@
 #define ENABLE_LOG_ERROR
 #define ENABLE_LOG_INFO
 #define ENABLE_PRINTF_HEXDUMP
+#define ENABLE_MODPLAYER
 
 // Enable Classic/LE based on esp-idf sdkconfig
 #include "sdkconfig.h"
@@ -40,8 +41,6 @@
 
 // Classic configuration
 #ifdef ENABLE_CLASSIC
-
-#define ENABLE_MODPLAYER
 
 #define ENABLE_HFP_WIDE_BAND_SPEECH
 
