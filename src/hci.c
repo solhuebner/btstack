@@ -4980,7 +4980,7 @@ static void event_handler(uint8_t *packet, uint16_t size){
                     break;
                 case HCI_SUBEVENT_LE_BIG_SYNC_LOST:
                     hci_stack->iso_active_operation_type = HCI_ISO_TYPE_INVALID;
-                    big_sync = hci_big_sync_for_handle(packet[4]);
+                    big_sync = hci_big_sync_for_handle(hci_subevent_le_big_sync_lost_get_big_handle(packet));
                     if (big_sync != NULL){
                         uint8_t big_handle = packet[4];
                         btstack_linked_list_remove(&hci_stack->le_audio_big_syncs, (btstack_linked_item_t *) big_sync);
