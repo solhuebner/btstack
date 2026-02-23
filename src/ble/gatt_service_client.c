@@ -1043,6 +1043,11 @@ gatt_service_client_can_query_characteristic(const gatt_service_client_connectio
 }
 
 uint8_t gatt_service_client_disconnect(gatt_service_client_connection_t *connection) {
+    if (connection->state != GATT_SERVICE_CLIENT_STATE_CONNECTED) {
+        // disconnect during connection setup not supported
+        return ERROR_CODE_COMMAND_DISALLOWED;
+    }
+
     // cache connection info
     uint16_t cid = connection->cid;
     hci_con_handle_t con_handle = connection->con_handle;
