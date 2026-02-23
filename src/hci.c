@@ -1194,6 +1194,13 @@ uint8_t hci_send_iso_packet_buffer(uint16_t size){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
 
+    // drop last packet for just disconnected cis on central
+    if (iso_stream->state == HCI_ISO_STREAM_STATE_IDLE) {
+        hci_release_packet_buffer();
+        hci_iso_notify_can_send_now();
+        return ERROR_CODE_SUCCESS;
+    }
+
     // TODO: check for space on controller
 
 #ifdef ENABLE_ISO_BIG_TRANSMIT_TRACKING
@@ -4567,8 +4574,17 @@ static void event_handler(uint8_t *packet, uint16_t size){
             iso_stream = hci_iso_stream_for_con_handle(handle);
             if (iso_stream != NULL){
                 if (iso_stream->role == HCI_ROLE_MASTER) {
-                    // Central: reset state, it's freed by gap_cig_remove
-                    iso_stream->state = HCI_ISO_STREAM_STATE_IDLE;
+                    // Central: mark as disconnected (and ready) if pending request to send, otherwise
+                    if (iso_stream->can_send_now_requested) {
+                        log_info("CIS #%u with handle %04x has send request, set to DISCONNECTED", iso_stream->stream_id, handle);
+                        iso_stream->state = HCI_ISO_STREAM_STATE_DISCONNECTED;
+                        iso_stream->num_packets_sent = 0;
+                        // Maybe next round
+                        hci_iso_notify_can_send_now();
+                    } else {
+                        // set state to idle, gap_cig_remove will handle the rest
+                        iso_stream->state = HCI_ISO_STREAM_STATE_IDLE;
+                    }
                 } else {
                     // Peripheral: remove iso stream
                    hci_iso_stream_finalize(iso_stream);
@@ -11111,23 +11127,30 @@ static void hci_iso_notify_can_send_now(void){
         // CIG becomes active after all ISO paths have been set-up
         if (cig->state != LE_AUDIO_CIG_STATE_ACTIVE) continue;
 
-        for (uint8_t i=0;i<cig->num_cis;i++){
-            hci_iso_stream_t * iso_stream = hci_iso_stream_for_con_handle(cig->cis_con_handles[i]);
-            // ignore already closed connections
-            if (iso_stream->state != HCI_ISO_STREAM_STATE_ACTIVE) continue;
-
-            if (iso_stream->can_send_now_requested) {
-                if ((iso_stream->num_packets_sent < hci_stack->iso_packets_to_queue)) {
-                    iso_stream->can_send_now_requested = false;
-                    bool group_complete = cig->highest_outgoing_cis_index == i;
-                    hci_emit_cis_can_send_now(iso_stream, i, group_complete);
-                    if (hci_stack->hci_packet_buffer_reserved) return;
-                } else {
-                    // wait for next round
-                    break;
+        bool run_again;
+        do {
+            run_again = false;
+            for (uint8_t i=0;i<cig->num_cis;i++){
+                hci_iso_stream_t * iso_stream = hci_iso_stream_for_con_handle(cig->cis_con_handles[i]);
+                // we grant can send now request if requested
+                if (iso_stream->can_send_now_requested) {
+                    if ((iso_stream->num_packets_sent < hci_stack->iso_packets_to_queue)) {
+                        iso_stream->can_send_now_requested = false;
+                        bool group_complete = cig->highest_outgoing_cis_index == i;
+                        // update disconnected CIS, trigger re-run if this was last active index
+                        if (iso_stream->state == HCI_ISO_STREAM_STATE_DISCONNECTED) {
+                            iso_stream->state = HCI_ISO_STREAM_STATE_IDLE;
+                            run_again = group_complete;
+                        }
+                        hci_emit_cis_can_send_now(iso_stream, i, group_complete);
+                        if (hci_stack->hci_packet_buffer_reserved) return;
+                    } else {
+                        // wait for next round
+                        break;
+                    }
                 }
             }
-        }
+        } while (run_again);
     }
 
     // Peripheral: iterate over all CIS
@@ -11282,18 +11305,27 @@ uint8_t hci_request_cis_can_send_now_events(hci_con_handle_t cis_con_handle){
     if (iso_stream == NULL){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
-    if ((iso_stream->iso_type != HCI_ISO_TYPE_CIS) && (iso_stream->state != HCI_ISO_STREAM_STATE_ACTIVE)) {
+    if (iso_stream->iso_type != HCI_ISO_TYPE_CIS) {
         return ERROR_CODE_COMMAND_DISALLOWED;
     }
+
     // get CIG
     le_audio_cig_t * cig = hci_cig_for_id(iso_stream->group_id);
     if (cig == NULL) {
         iso_stream->can_send_now_requested = true;
     } else {
+        if (cig->state != LE_AUDIO_CIG_STATE_ACTIVE) {
+            return ERROR_CODE_COMMAND_DISALLOWED;
+        }
+        cig->highest_outgoing_cis_index = 0;
         for (uint8_t i = 0; i<cig->num_cis;i++) {
             if (cig->params->cis_params[i].max_sdu_c_to_p > 0) {
                 hci_iso_stream_t * cis = hci_iso_stream_for_con_handle(cig->cis_con_handles[i]);
-                cis->can_send_now_requested = true;
+                btstack_assert(cis != NULL);
+                if (cis->state == HCI_ISO_STREAM_STATE_ACTIVE) {
+                    cis->can_send_now_requested = true;
+                    cig->highest_outgoing_cis_index = i;
+                }
             }
         }
     }
@@ -11380,9 +11412,6 @@ uint8_t gap_cis_create(uint8_t cig_id, hci_con_handle_t cis_con_handles [], hci_
         if (cis_handle == HCI_CON_HANDLE_INVALID){
             return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
         }
-        if (cig->params->cis_params[i].max_sdu_c_to_p > 0) {
-            cig->highest_outgoing_cis_index = i;
-        }
         uint8_t j;
         bool found = false;
         for (j=0;j<cig->num_cis;j++){
@@ -11399,8 +11428,6 @@ uint8_t gap_cis_create(uint8_t cig_id, hci_con_handle_t cis_con_handles [], hci_
             return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
         }
     }
-
-    log_info("CIS Create; highest outgoing cis index %u", cig->highest_outgoing_cis_index);
 
     cig->state = LE_AUDIO_CIG_STATE_CREATE_CIS;
     hci_run();

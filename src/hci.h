@@ -778,6 +778,7 @@ typedef enum{
     HCI_ISO_STREAM_STATE_ACTIVE,
     HCI_ISO_STREAM_STATE_W2_CLOSE,
     HCI_ISO_STREAM_STATE_W4_DISCONNECTED,
+    HCI_ISO_STREAM_STATE_DISCONNECTED,
 } hci_iso_stream_state_t;
 
 typedef struct {
