@@ -1056,6 +1056,11 @@ uint8_t gatt_service_client_disconnect(gatt_service_client_connection_t *connect
 uint8_t gatt_service_client_unregister_client(gatt_service_client_t * client){
     btstack_assert(client != NULL);
 
+    if (client->connections != NULL) {
+        // we can only unregister a client if there's no active connections
+        return ERROR_CODE_COMMAND_DISALLOWED;
+    }
+
     client->packet_handler = NULL;
 
     client->cid_counter = 0;
