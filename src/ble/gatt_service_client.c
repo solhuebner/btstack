@@ -1053,7 +1053,7 @@ uint8_t gatt_service_client_disconnect(gatt_service_client_connection_t *connect
     return ERROR_CODE_SUCCESS;
 }
 
-void gatt_service_client_unregister_client(gatt_service_client_t * client){
+uint8_t gatt_service_client_unregister_client(gatt_service_client_t * client){
     btstack_assert(client != NULL);
 
     client->packet_handler = NULL;
@@ -1069,6 +1069,8 @@ void gatt_service_client_unregister_client(gatt_service_client_t * client){
     }
 
     btstack_linked_list_remove(&gatt_service_clients, &client->item);
+
+    return ERROR_CODE_SUCCESS;
 }
 
 void gatt_service_client_dump_characteristic_value_handles(const gatt_service_client_connection_t *connection,
