@@ -1,21 +1,24 @@
 #include <assert.h>
 #include <stdatomic.h>
+
+#include "btstack_debug.h"
 #include "hal_uart_dma.h"
 
 #include "btstack_defines.h"
+#include "btstack_util.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/queue.h"
 
 #include "driver/gpio.h"
 #include "driver/uart.h"
 #include "esp_log.h"
-#include "esp_timer.h"
 #include "sdkconfig.h"
+#include "hal/uart_ll.h"
+#include "soc/uart_periph.h"
+#include "soc/uart_struct.h"
 
 #define UART_NO                  (CONFIG_BTSTACK_UART_NUM)
-#define UART_BUF_SZ              (1024)
 
 #define UART_TX_PIN              (CONFIG_BTSTACK_UART_TX_PIN)
 #define UART_RX_PIN              (CONFIG_BTSTACK_UART_RX_PIN)
@@ -23,30 +26,80 @@
 #define UART_CTS_PIN             (CONFIG_BTSTACK_UART_CTS_PIN)
 #define UART_NRESET              (CONFIG_BTSTACK_UART_NRESET_PIN)
 
-// Manually control RTS / data from Controller
-#define ENABLE_UART_MANUAL_RTS
-
-// report blocking writes
-// #define ENABLE_UART_REPORT_TX_DELAY
-
-// Without manual RTS, incoming data gets lost without an error event on ESP32-P4
-
 static uart_config_t uart_config = {
+    .source_clk = UART_SCLK_DEFAULT,
     .baud_rate  = 1000000,
     .data_bits  = UART_DATA_8_BITS,
     .parity     = UART_PARITY_DISABLE,
     .stop_bits  = UART_STOP_BITS_1,
     .flow_ctrl  = UART_HW_FLOWCTRL_CTS_RTS,
-    .source_clk = UART_SCLK_DEFAULT,
+    .rx_flow_ctrl_thresh = 120,
 };
 
 typedef void (*callback_t)();
 static callback_t receive_callback;
 static callback_t send_callback;
-static QueueHandle_t uart_queue;
-static SemaphoreHandle_t rx_mutex;
-static void uart_event_task(void *pvParameters);
+
 static const char *TAG = "hal_uart";
+
+typedef struct {
+    uint8_t *buf;
+    uint16_t nbytes;
+} io_cb_t;
+
+static io_cb_t rx_transfer;
+static io_cb_t tx_transfer;
+
+static void IRAM_ATTR hal_uart_dma_fill_tx_fifo(uart_dev_t *uart) {
+    uint16_t space = uart_ll_get_txfifo_len(uart);
+    uint16_t chunk = (uint16_t) btstack_min(space, tx_transfer.nbytes);
+    if (chunk > 0) {
+        uart_ll_write_txfifo(uart, tx_transfer.buf, chunk);
+        tx_transfer.nbytes -= chunk;
+        tx_transfer.buf    += chunk;
+    }
+}
+
+static void IRAM_ATTR hal_uart_dma_read_rx_fifo(uart_dev_t *uart) {
+    uint16_t available = uart_ll_get_rxfifo_len(uart);
+    uint16_t chunk = (uint16_t) btstack_min(available, rx_transfer.nbytes);
+    if (chunk > 0) {
+        uart_ll_read_rxfifo(uart, rx_transfer.buf, chunk);
+        rx_transfer.nbytes -= chunk;
+        rx_transfer.buf    += chunk;
+    }
+}
+
+// custom interrupt handler
+static void IRAM_ATTR hal_uart_dma_isr(void *arg) {
+    uart_dev_t *uart = (uart_dev_t *)arg;
+    uint32_t status = uart_ll_get_intsts_mask(uart);
+
+    // RX
+    if ((status & UART_RXFIFO_FULL_INT_ST_M) != 0) {
+        uart_ll_clr_intsts_mask(uart, UART_RXFIFO_FULL_INT_CLR_M);
+        hal_uart_dma_read_rx_fifo(uart);
+        if (rx_transfer.nbytes == 0) {
+            uart_ll_disable_intr_mask(uart, UART_RXFIFO_FULL_INT_ENA_M);
+            receive_callback();
+        } else {
+            // get length of next chunk
+            uint16_t chunk = (uint16_t) btstack_min(UART_LL_FIFO_DEF_LEN - 1, rx_transfer.nbytes);
+            uart_ll_set_rxfifo_full_thr(uart, chunk);
+        }
+    }
+
+    // TX
+    if ((status & UART_TXFIFO_EMPTY_INT_ST_M) != 0){
+        uart_ll_clr_intsts_mask(uart, UART_TXFIFO_EMPTY_INT_CLR_M);
+
+        hal_uart_dma_fill_tx_fifo(uart);
+        if (tx_transfer.nbytes == 0) {
+            uart_ll_disable_intr_mask(uart, UART_TXFIFO_EMPTY_INT_ENA_M);
+            send_callback();
+        }
+    }
+}
 
 /**
  * @brief Init and open device
@@ -79,142 +132,37 @@ void hal_uart_dma_init(void) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
 #endif
 
-    int intr_alloc_flags = 0;
-#ifdef CONFIG_UART_ISR_IN_IRAM
-    intr_alloc_flags = ESP_INTR_FLAG_IRAM;
-#endif
-
-    rx_mutex = xSemaphoreCreateMutex();
-    assert(rx_mutex != NULL);
-
-    ESP_ERROR_CHECK(uart_driver_install(UART_NO, UART_BUF_SZ * 2, UART_BUF_SZ * 2, 20, &uart_queue, intr_alloc_flags));
+    // Configure UART - UART controls RTS
     ESP_ERROR_CHECK(uart_param_config(UART_NO, &uart_config));
-
-#ifdef ENABLE_UART_MANUAL_RTS
-    // Configure GPIO15 as output
-    gpio_config_t io_conf_rts = {
-        .pin_bit_mask = (1ULL<<UART_RTS_PIN),
-        .mode = GPIO_MODE_OUTPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE
-    };
-    gpio_config(&io_conf_rts);
-
-    // Set RTS to HIGH
-    gpio_set_level(UART_RTS_PIN, 1);
-
-    // Configure UART - we control RTS
-    ESP_ERROR_CHECK(uart_set_pin(UART_NO, UART_TX_PIN, UART_RX_PIN, UART_PIN_NO_CHANGE, UART_CTS_PIN));
-
-#else
+    ESP_ERROR_CHECK(uart_set_pin(UART_NO, UART_TX_PIN, UART_RX_PIN, UART_RTS_PIN, UART_CTS_PIN));
 
 #ifdef CONFIG_EXAMPLE_HCI_UART_INVERT_RTS
-
     // On ESP32-P4, RTS is HIGH when we're ready to receive
     // this is opposite to common practice but can be fixed by inverting the signal
 
     // Has not been tested on other ESP32 chips other then ESP32-P4
-
-    uint32_t invert_mask = 0;
-    invert_mask |= UART_SIGNAL_RTS_INV;
-    ESP_ERROR_CHECK(uart_set_line_inverse(UART_NO, invert_mask));
+    ESP_ERROR_CHECK(uart_set_line_inverse(UART_NO, UART_SIGNAL_RTS_INV));
 #endif
 
-    // Configure UART - UART controls RTS
-    ESP_ERROR_CHECK(uart_set_pin(UART_NO, UART_TX_PIN, UART_RX_PIN, UART_RTS_PIN, UART_CTS_PIN));
+    // disable default interrupts
+    uart_dev_t *uart = UART_LL_GET_HW(UART_NO);
+    uart_ll_disable_intr_mask(uart, 0xFFFFFFFF);
 
+    // setup interrupt handler
+    int intr_alloc_flags = 0;
+#ifdef CONFIG_UART_ISR_IN_IRAM
+    intr_alloc_flags = ESP_INTR_FLAG_IRAM;
 #endif
+    esp_intr_alloc(uart_periph_signal[UART_NO].irq,
+                   intr_alloc_flags,
+                   hal_uart_dma_isr,
+                   UART_LL_GET_HW(UART_NO),
+                   NULL);
 
-    //Create a task to handler UART event from ISR
-    xTaskCreate(uart_event_task, "uart_event_task", 3072, NULL, 10, NULL);
-}
+    // configure TX Empty threshold
+    uart_ll_set_txfifo_empty_thr(uart, 10);
 
-typedef struct {
-    uint8_t *buf;
-    uint16_t nbytes;
-} io_cb_t;
-
-static io_cb_t current_transfer;
-
-static void IRAM_ATTR uart_event_task(void *pvParameters)
-{
-    // flush queue
-    uart_flush_input(UART_NO);
-    xQueueReset(uart_queue);
-
-    uart_event_t event;
-    for (;;) {
-        //Waiting for UART event.
-        if (xQueueReceive(uart_queue, (void *)&event, (TickType_t)portMAX_DELAY)) {
-//            ESP_LOGI(TAG, "uart[%d] event:", UART_NO);
-            switch (event.type) {
-            //Event of UART receiving data
-            /*We'd better handler data event fast, there would be much more data events than
-            other types of events. If we take too much time on data event, the queue might
-            be full.*/
-            case UART_DATA:
-                if( xSemaphoreTake(rx_mutex, portMAX_DELAY) == pdTRUE ) {
-                    size_t cached_data_len = 0;
-                    uart_get_buffered_data_len(UART_NO, &cached_data_len);
-                    bool transfer_complete = (current_transfer.buf != NULL) && (cached_data_len >= current_transfer.nbytes);
-                    // ESP_LOGI(TAG, "[UART DATA]: new %d => cached %u, requested %d -> completed %u", event.size, cached_data_len, current_transfer.nbytes, transfer_complete);
-                    if( transfer_complete ) {
-                        int length = uart_read_bytes(UART_NO, current_transfer.buf, current_transfer.nbytes, portMAX_DELAY);
-                        assert(length == current_transfer.nbytes);
-                        current_transfer = (io_cb_t){ .buf = NULL, .nbytes = 0 };
-                    }
-                    xSemaphoreGive(rx_mutex);
-                    if( transfer_complete && (receive_callback != NULL )) {
-#ifdef ENABLE_UART_MANUAL_RTS
-                        // Set GPIO15 to LOW
-                        gpio_set_level(UART_RTS_PIN, 1);
-#endif
-
-                        // start processing
-                        receive_callback();
-                    }
-                } else {
-                    assert(false);
-                }
-                break;
-            //Event of HW FIFO overflow detected
-            case UART_FIFO_OVF:
-                ESP_LOGE(TAG, "hw fifo overflow");
-                // If fifo overflow happened, you should consider adding flow control for your application.
-                // The ISR has already reset the rx FIFO,
-                // As an example, we directly flush the rx buffer here in order to read more data.
-                uart_flush_input(UART_NO);
-                xQueueReset(uart_queue);
-                break;
-            //Event of UART ring buffer full
-            case UART_BUFFER_FULL:
-                ESP_LOGE(TAG, "ring buffer full");
-                // If buffer full happened, you should consider increasing your buffer size
-                // As an example, we directly flush the rx buffer here in order to read more data.
-                uart_flush_input(UART_NO);
-                xQueueReset(uart_queue);
-                break;
-            //Event of UART RX break detected
-            case UART_BREAK:
-                ESP_LOGE(TAG, "uart rx break");
-                break;
-            //Event of UART parity check error
-            case UART_PARITY_ERR:
-                ESP_LOGE(TAG, "uart parity error");
-                break;
-            //Event of UART frame error
-            case UART_FRAME_ERR:
-                ESP_LOGE(TAG, "uart frame error");
-                break;
-            //Others
-            default:
-                ESP_LOGI(TAG, "uart event type: %d", event.type);
-                break;
-            }
-        }
-    }
-    vTaskDelete(NULL);
+    printf("Initial txfifo len: %lu\n", uart_ll_get_txfifo_len(uart));
 }
 
 /**
@@ -239,42 +187,6 @@ void hal_uart_dma_set_csr_irq_handler( void (*csr_irq_handler)(void)){
 
 void hal_uart_dma_set_sleep(uint8_t sleep) {
     UNUSED(sleep);
-}
-
-/**
- * @brief Receive block. When done, callback set by hal_uart_dma_set_block_received must be called
- * @param buffer
- * @param lengh
- */
-void hal_uart_dma_receive_block(uint8_t *buffer, uint16_t len) {
-    assert(current_transfer.buf == NULL);
-    assert(current_transfer.nbytes == 0);
-
-    if( xSemaphoreTake(rx_mutex, portMAX_DELAY) == pdTRUE ) {
-        size_t cached_data_len = 0;
-        uart_get_buffered_data_len(UART_NO, &cached_data_len);
-        bool rx_complete = cached_data_len >= len;
-        // ESP_LOGI(TAG, "[UART RECV]: %u), have %u -> complete %u", len, cached_data_len, rx_complete);
-        if( rx_complete ) {
-            int length = uart_read_bytes(UART_NO, buffer, len, portMAX_DELAY);
-            assert(length == len);
-        } else {
-            current_transfer.buf = buffer;
-            current_transfer.nbytes = len;
-        }
-        xSemaphoreGive(rx_mutex);
-        if( rx_complete && (receive_callback != NULL )) {
-            receive_callback();
-        }
-#ifdef ENABLE_UART_MANUAL_RTS
-        else {
-            // Set GPIO15 to LOW
-            gpio_set_level(UART_RTS_PIN, 0);
-        }
-#endif
-    } else {
-        assert(false);
-    }
 }
 
 /**
@@ -305,34 +217,58 @@ int  hal_uart_dma_set_flowcontrol(int flowcontrol) {
 #endif
 
 /**
+ * @brief Receive block. When done, callback set by hal_uart_dma_set_block_received must be called
+ * @param buffer
+ * @param lengh
+ */
+void hal_uart_dma_receive_block(uint8_t *buffer, uint16_t len) {
+
+    btstack_assert(rx_transfer.nbytes == 0);
+
+    // store transfer
+    rx_transfer.buf = (uint8_t *)buffer;
+    rx_transfer.nbytes = len;
+
+    // RX interrupts are off, we can fill buffer from fifo
+    uart_dev_t *uart = UART_LL_GET_HW(UART_NO);
+    hal_uart_dma_read_rx_fifo(uart);
+
+    if (rx_transfer.nbytes > 0) {
+        // enable interrupt if we need more data
+        uart_dev_t *uart = UART_LL_GET_HW(UART_NO);
+        uint16_t chunk = (uint16_t) btstack_min(UART_LL_FIFO_DEF_LEN - 1, rx_transfer.nbytes);
+        uart_ll_set_rxfifo_full_thr(uart, chunk);
+        uart_ll_clr_intsts_mask(uart, UART_RXFIFO_FULL_INT_CLR_M);
+        uart_ll_ena_intr_mask(uart, UART_RXFIFO_FULL_INT_ENA_M);
+    } else {
+        // notify higher layer that block has been sent
+        receive_callback();
+    }
+}
+
+/**
  * @brief Send block. When done, callback set by hal_uart_set_block_sent must be called
  * @param buffer
  * @param lengh
  */
 void hal_uart_dma_send_block(const uint8_t *buffer, uint16_t len) {
-    uint8_t *p = (uint8_t*)buffer;
-    int len_write = 0;
+    btstack_assert(tx_transfer.nbytes == 0);
 
-#ifdef ENABLE_UART_REPORT_TX_DELAY
-    int64_t start = esp_timer_get_time();
-#endif
+    // store transfer
+    tx_transfer.buf = (uint8_t *)buffer;
+    tx_transfer.nbytes = len;
 
-    while (len) {
-        len_write = uart_write_bytes(UART_NO, p, len);
-        assert(len_write > 0);
-        len -= len_write;
-        p += len_write;
-    }
+    // TX Empty interrupt is off, we can start filling
+    uart_dev_t *uart = UART_LL_GET_HW(UART_NO);
+    hal_uart_dma_fill_tx_fifo(uart);
 
-#ifdef ENABLE_UART_REPORT_TX_DELAY
-    int64_t end = esp_timer_get_time();
-
-    if (end - start > 1000) {
-        printf("uart_write_bytes took %lld us\n", (end - start));
-    }
-#endif
-
-    if( send_callback != NULL ) {
+    if (tx_transfer.nbytes > 0) {
+        // enable interrupt if there's more data (in this case, the tx fifo is full and we're above the threshold)
+        uart_dev_t *uart = UART_LL_GET_HW(UART_NO);
+        uart_ll_clr_intsts_mask(uart, UART_TXFIFO_EMPTY_INT_CLR_M);
+        uart_ll_ena_intr_mask(uart, UART_TXFIFO_EMPTY_INT_ENA_M);
+    } else {
+        // notify higher layer that block has been sent
         send_callback();
     }
 }
