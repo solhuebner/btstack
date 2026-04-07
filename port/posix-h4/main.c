@@ -361,7 +361,7 @@ int main(int argc, const char * argv[]){
         printf("Use AIROC Download Mode for Broadcom/Cypress/Infineon chipset\n");
         hci_set_airoc_download_mode(true);
         hci_set_chipset(btstack_chipset_bcm_instance());
-        use_fast_uart();
+        config.baudrate_main = config.baudrate_init;
         is_bcm = 1;
     }
 #endif
