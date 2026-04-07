@@ -110,6 +110,7 @@ static void dummy_handler(uint8_t packet_type, uint8_t *packet, uint16_t size);
 typedef enum {
     H4_OFF,
     H4_W4_PACKET_TYPE,
+    H4_W4_CMD_HEADER,
     H4_W4_EVENT_HEADER,
     H4_W4_ACL_HEADER,
     H4_W4_SCO_HEADER,
@@ -232,9 +233,9 @@ static void hci_transport_h4_block_read(void){
     switch (h4_state) {
         case H4_W4_PACKET_TYPE:
             switch (hci_packet[0]){
-                case HCI_EVENT_PACKET:
-                    bytes_to_read = HCI_EVENT_HEADER_SIZE;
-                    h4_state = H4_W4_EVENT_HEADER;
+                case HCI_COMMAND_DATA_PACKET:
+                    bytes_to_read = HCI_CMD_HEADER_SIZE;
+                    h4_state = H4_W4_CMD_HEADER;
                     break;
                 case HCI_ACL_DATA_PACKET:
                     bytes_to_read = HCI_ACL_HEADER_SIZE;
@@ -243,6 +244,10 @@ static void hci_transport_h4_block_read(void){
                 case HCI_SCO_DATA_PACKET:
                     bytes_to_read = HCI_SCO_HEADER_SIZE;
                     h4_state = H4_W4_SCO_HEADER;
+                    break;
+                case HCI_EVENT_PACKET:
+                    bytes_to_read = HCI_EVENT_HEADER_SIZE;
+                    h4_state = H4_W4_EVENT_HEADER;
                     break;
 #ifdef ENABLE_LE_ISOCHRONOUS_STREAMS
                 case HCI_ISO_DATA_PACKET:
