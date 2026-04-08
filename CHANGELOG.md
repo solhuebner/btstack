@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - A2DP: get capabilities of all streamendpoints
+- A2DP: avoid assert for outgoing connection to local Bluetooth address
 
 ### Changed
 - GAP: LE link layer commands are sent sequentially

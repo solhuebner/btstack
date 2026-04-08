@@ -159,7 +159,10 @@ uint8_t a2dp_source_establish_stream(bd_addr_t remote_addr, uint16_t *avdtp_cid)
             return status;
         }
         connection = avdtp_get_connection_for_avdtp_cid(outgoing_cid);
-        btstack_assert(connection != NULL);
+        if (connection == NULL) {
+            // if the remote addr matches our address, the SDP query fill fail, which finalizes the just created connection struct
+            return ERROR_CODE_UNSPECIFIED_ERROR;
+        }
 
         // setup state
         connection->a2dp_source_config_process.outgoing_active = true;
