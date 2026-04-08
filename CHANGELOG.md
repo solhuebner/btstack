@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - HCI: configure default LE Data Length with hci_le_set_max_data_length and hci_le_set_default_data_length
 - GAP: set LE Data Length for connection with gap_le_set_data_length
 - POSIX-H4: support newer CYW55xxx Controllers with --airoc-download-mode flag
+- ESP32: support external Bluetooth Controller
 
 ### Fixed
 - A2DP: get capabilities of all streamendpoints
