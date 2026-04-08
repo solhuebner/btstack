@@ -742,6 +742,8 @@ void a2dp_config_process_avdtp_event_handler(avdtp_role_t role, uint8_t *packet,
                     a2dp_config_process_sep_discovery_cid = 0;
                     a2dp_config_process_discover_seps_with_next_waiting_connection();
                 }
+            } else {
+                config_process->state = A2DP_W2_GET_ALL_CAPABILITIES;
             }
             break;
 
