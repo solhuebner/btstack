@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - POSIX-H4: support newer CYW55xxx Controllers with --airoc-download-mode flag
 
 ### Fixed
+- A2DP: get capabilities of all streamendpoints
 
 ### Changed
 - GAP: LE link layer commands are sent sequentially
