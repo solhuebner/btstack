@@ -130,6 +130,16 @@ static  uint8_t media_sbc_codec_capabilities[] = {
     2, 53
 }; 
 
+static uint8_t media_mpegd_usac_codec_capabilities[] = {
+    0xBF,   // object type + dynamic range control
+    0xFF,   // sampling frequencies [19:12]
+    0xFF,   // sampling frequencies [11:8] + channels
+    0xFF,   // VBR + bit rate [22:16]
+    0xFF,   // bit rate [15:8]
+    0xFF,   // bit rate [7:0]
+    0x00
+};
+
 // Audio Generator
 static struct {
     union {
@@ -176,6 +186,9 @@ static const btstack_sbc_encoder_t *   sbc_encoder_instance;
 static btstack_sbc_encoder_bluedroid_t sbc_encoder_state;
 
 static uint8_t media_sbc_codec_configuration[4];
+static uint8_t media_mpegd_usac_codec_configuration[7];
+static uint8_t media_mpegd_usac_local_seid;
+static uint8_t media_mpegd_sbc_local_seid;
 
 //uint16_t                        sampling_frequency;
 //avdtp_channel_mode_t            channel_mode;
@@ -193,6 +206,14 @@ static const avdtp_configuration_sbc_t my_sbc_codec_configuration = {
         .allocation_method = AVDTP_SBC_ALLOCATION_METHOD_LOUDNESS,
         .min_bitpool_value = 2,
         .max_bitpool_value = 53
+};
+
+static const avdtp_configuration_mpegd_usac_t my_mpeg_d_codec_configuration = {
+        .object_type = AVDTP_USAC_OBJECT_TYPE_MPEG_D_DRC,
+        .sampling_frequency = 44100,
+        .channels = 1,
+        .bit_rate = 0x2A00,
+        .vbr = 1
 };
 
 static a2dp_media_sending_context_t media_tracker;
@@ -276,8 +297,20 @@ static int a2dp_source_and_avrcp_services_init(void){
     avdtp_set_preferred_sampling_frequency(local_stream_endpoint, A2DP_SOURCE_DEMO_PREFERRED_SAMPLING_RATE);
 
     // Store stream enpoint's SEP ID, as it is used by A2DP API to indentify the stream endpoint
-    media_tracker.local_seid = avdtp_local_seid(local_stream_endpoint);
+    media_mpegd_sbc_local_seid = avdtp_local_seid(local_stream_endpoint);
     avdtp_source_register_delay_reporting_category(media_tracker.local_seid);
+
+    // Add second endpoint for MPEG-D USAC
+    local_stream_endpoint = a2dp_source_create_stream_endpoint(AVDTP_AUDIO, AVDTP_CODEC_MPEG_D_USAC,
+                                                               media_mpegd_usac_codec_capabilities, sizeof(media_mpegd_usac_codec_capabilities),
+                                                               media_mpegd_usac_codec_configuration, sizeof(media_mpegd_usac_codec_configuration));
+    if (!local_stream_endpoint){
+        printf("A2DP Source: not enough memory to create local MPEG-D USAC stream endpoint\n");
+        return 1;
+    }
+    media_mpegd_usac_local_seid = avdtp_local_seid(local_stream_endpoint);
+    avdtp_source_register_delay_reporting_category(media_mpegd_usac_local_seid);
+    media_tracker.local_seid = media_mpegd_usac_local_seid;
 
     // Initialize AVRCP Service
     avrcp_init();
@@ -663,6 +696,9 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
                                             sbc_configuration.max_bitpool_value,
                                             sbc_configuration.channel_mode);
             break;
+        case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_MPEG_D_USAC_CONFIGURATION:
+            printf("A2DP Source: Received MPEG-D USAC codec configuration (media payload generation not implemented in this demo)\n");
+            break;
 
         case A2DP_SUBEVENT_SIGNALING_DELAY_REPORT:
             printf("DELAY_REPORT received: %d.%0d ms, local seid %d\n",
@@ -714,6 +750,7 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             }
             break;
         }
+
         case A2DP_SUBEVENT_SIGNALING_CAPABILITIES_COMPLETE:
             printf("A2DP Source: All streamendpoints capabilities queried\n\n");
             break;
@@ -753,6 +790,11 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             local_seid = a2dp_subevent_stream_started_get_local_seid(packet);
             cid = a2dp_subevent_stream_started_get_a2dp_cid(packet);
 
+            if (local_seid != media_tracker.local_seid){
+                printf("A2DP Source: Stream started on non-SBC endpoint (local_seid 0x%02x), media payload generation not implemented\n", local_seid);
+                break;
+            }
+
             play_info.status = AVRCP_PLAYBACK_STATUS_PLAYING;
             if (media_tracker.avrcp_cid){
                 avrcp_target_set_now_playing_info(media_tracker.avrcp_cid, &tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
@@ -768,6 +810,9 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
         case A2DP_SUBEVENT_STREAMING_CAN_SEND_MEDIA_PACKET_NOW:
             local_seid = a2dp_subevent_streaming_can_send_media_packet_now_get_local_seid(packet);
             cid = a2dp_subevent_signaling_media_codec_sbc_configuration_get_a2dp_cid(packet);
+            if (local_seid != media_tracker.local_seid){
+                break;
+            }
             a2dp_demo_send_media_packet();
             break;        
 
@@ -1054,8 +1099,13 @@ static void stdin_process(char cmd){
             break;
 
         case 'W':
-            printf("Configure manually\n");
+            printf("Configure SBC manually\n");
             status = a2dp_source_set_config_sbc(media_tracker.a2dp_cid, 1, 1, &my_sbc_codec_configuration);
+            break;
+
+        case 'Q':
+            printf("Configure USAC manually\n");
+            status = a2dp_source_set_config_mpegd_usac(media_tracker.a2dp_cid, 2, 2, &my_mpeg_d_codec_configuration);
             break;
 
         case 'w':
