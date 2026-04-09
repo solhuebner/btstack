@@ -233,6 +233,10 @@ uint8_t a2dp_source_set_config_mpeg_aac(uint16_t a2dp_cid,  uint8_t local_seid, 
     return a2dp_config_process_set_mpeg_aac(AVDTP_ROLE_SOURCE, a2dp_cid, local_seid, remote_seid, configuration);
 }
 
+uint8_t a2dp_source_set_config_mpegd_usac(uint16_t a2dp_cid,  uint8_t local_seid,  uint8_t remote_seid, const avdtp_configuration_mpegd_usac_t * configuration){
+    return a2dp_config_process_set_mpegd_usac(AVDTP_ROLE_SOURCE, a2dp_cid, local_seid, remote_seid, configuration);
+}
+
 uint8_t a2dp_source_set_config_atrac(uint16_t a2dp_cid, uint8_t local_seid, uint8_t remote_seid, const avdtp_configuration_atrac_t * configuration){
     return a2dp_config_process_set_atrac(AVDTP_ROLE_SOURCE, a2dp_cid, local_seid, remote_seid, configuration);
 }

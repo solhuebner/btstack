@@ -1032,6 +1032,31 @@ uint8_t a2dp_config_process_set_mpeg_aac(avdtp_role_t role, uint16_t a2dp_cid,  
     return ERROR_CODE_SUCCESS;
 }
 
+uint8_t a2dp_config_process_set_mpegd_usac(avdtp_role_t role, uint16_t a2dp_cid,  uint8_t local_seid,  uint8_t remote_seid, const avdtp_configuration_mpegd_usac_t * configuration){
+    avdtp_connection_t * connection = avdtp_get_connection_for_avdtp_cid(a2dp_cid);
+    if (connection == NULL){
+        return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
+    }
+    a2dp_config_process_t * config_process = a2dp_config_process_for_role(role, connection);
+
+    uint8_t status = a2dp_config_process_config_init(role, connection, local_seid, remote_seid, AVDTP_CODEC_MPEG_D_USAC);
+    if (status != ERROR_CODE_SUCCESS) {
+        return status;
+    }
+    config_process->local_stream_endpoint->remote_configuration.media_codec.media_codec_information = (uint8_t *) config_process->local_stream_endpoint->media_codec_info;
+    config_process->local_stream_endpoint->remote_configuration.media_codec.media_codec_information_len = 7;
+    status = avdtp_config_mpegd_usac_store(config_process->local_stream_endpoint->remote_configuration.media_codec.media_codec_information, configuration);
+    if (status != ERROR_CODE_SUCCESS){
+        return status;
+    }
+
+#ifdef ENABLE_A2DP_EXPLICIT_CONFIG
+    a2dp_config_process_set_config(role, connection);
+#endif
+
+    return ERROR_CODE_SUCCESS;
+}
+
 uint8_t a2dp_config_process_set_atrac(avdtp_role_t role, uint16_t a2dp_cid, uint8_t local_seid, uint8_t remote_seid, const avdtp_configuration_atrac_t * configuration){
     avdtp_connection_t * connection = avdtp_get_connection_for_avdtp_cid(a2dp_cid);
     if (connection == NULL){
