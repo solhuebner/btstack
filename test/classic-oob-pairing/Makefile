@@ -51,6 +51,7 @@ AVDTP += \
     a2dp_sink.c         \
     btstack_ring_buffer.c \
     btstack_resample.c \
+    btstack_util.c  \
 
 AVRCP += \
     avrcp_media_item_iterator.c \
@@ -113,10 +114,12 @@ AVDTP_OBJ  = $(AVDTP:.c=.o)
 AVRCP_OBJ  = $(AVRCP:.c=.o)
 HXCMOD_PLAYER_OBJ = ${HXCMOD_PLAYER:.c=.o}
 SBC_DECODER_WITHOUT_WRAPPER_OBJ = $(filter-out ${BTSTACK_ROOT}/src/classic/btstack_sbc_decoder_bluedroid.o,${SBC_DECODER_OBJ})
+CORE_OBJ_NO_MAIN = $(filter-out main.o,${CORE_OBJ})
 
 EXAMPLES  = spp_counter a2dp_source_demo a2dp_sink_demo
+TESTS = codec_serialization_test
 
-all: ${EXAMPLES}
+all: ${EXAMPLES} ${TESTS}
 
 spp_counter: spp_counter.o ${CORE_OBJ}
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
@@ -129,13 +132,16 @@ a2dp_sink_demo: a2dp_sink_demo.o ${CORE_OBJ} ${SBC_DECODER_WITHOUT_WRAPPER_OBJ} 
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 a2dp_sink_demo: CFLAGS += -Wno-error
 
+codec_serialization_test: codec_serialization_test.o ${CORE_OBJ_NO_MAIN} ${AVDTP_OBJ} a2dp.o
+	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
+
 myclean:
-	rm -rf *.o *.dSYM *.wav *.sbc ${EXAMPLES}
+	rm -rf *.o *.dSYM *.wav *.sbc ${EXAMPLES} ${TESTS}
 
 clean: myclean
 
-test: ${EXAMPLES}
-	echo "No unit tests here, but examples build"
+test: ${EXAMPLES} ${TESTS}
+	echo "Examples and local tests build"
 
 coverage: all
 	echo "No coverage tests here"
