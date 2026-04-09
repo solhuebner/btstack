@@ -2051,7 +2051,7 @@ uint8_t avdtp_config_mpegd_usac_set_sampling_frequency(uint8_t * config, uint16_
     config[0] = (config[0] & 0xC0) | (uint8_t)(sampling_frequency_bitmap >> 20);
     config[1] = (uint8_t) (sampling_frequency_bitmap >> 12);
     config[2] = (uint8_t) (sampling_frequency_bitmap >> 4);
-    config[3] = (sampling_frequency_bitmap & 0x0f) << 4;
+    config[3] = ((sampling_frequency_bitmap & 0x0f) << 4) | (config[3] & 0x0F);
     return ERROR_CODE_SUCCESS;
 }
 
@@ -2072,7 +2072,7 @@ uint8_t avdtp_config_mpegd_usac_store(uint8_t * config, const avdtp_configuratio
         default:
             return ERROR_CODE_PARAMETER_OUT_OF_MANDATORY_RANGE;
     }
-    config[3] = config[3] | channels_bitmap;
+    config[3] = channels_bitmap;
     config[4] = ((configuration->vbr & 0x01) << 7) | ((configuration->bit_rate >> 16) & 0x7f);
     config[5] = (configuration->bit_rate >> 8) & 0xff;
     config[6] =  configuration->bit_rate & 0xff;
