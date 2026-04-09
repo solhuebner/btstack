@@ -3337,6 +3337,22 @@ typedef SSIZE_T ssize_t;
 #define A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_ATRAC_CONFIGURATION        0x05u
 
 /**
+ * @format 12111113113
+ * @param subevent_code
+ * @param avdtp_cid
+ * @param local_seid
+ * @param remote_seid
+ * @param reconfigure
+ * @param media_type
+ * @param object_type
+ * @param sampling_frequency
+ * @param num_channels
+ * @param vbr
+ * @param bit_rate
+ */
+#define A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_MPEG_D_USAC_CONFIGURATION        0x6u
+
+/**
  * @format 1211112LV
  * @param subevent_code
  * @param a2dp_cid
@@ -3348,7 +3364,7 @@ typedef SSIZE_T ssize_t;
  * @param media_codec_information_len
  * @param media_codec_information
  */
-#define A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION    0x06u
+#define A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION    0x07u
 
 /**
  * @format 12B111          Stream is opened but not started.
@@ -3359,7 +3375,7 @@ typedef SSIZE_T ssize_t;
  * @param remote_seid
  * @param status
  */
-#define A2DP_SUBEVENT_STREAM_ESTABLISHED                           0x07u
+#define A2DP_SUBEVENT_STREAM_ESTABLISHED                           0x08u
 
 /**
  * @format 121            If ENABLE_AVDTP_ACCEPTOR_EXPLICIT_START_STREAM_CONFIRMATION, user must explicitly accept stream start.
@@ -3367,7 +3383,7 @@ typedef SSIZE_T ssize_t;
  * @param a2dp_cid
  * @param local_seid
  */
-#define A2DP_SUBEVENT_START_STREAM_REQUESTED                       0x08u
+#define A2DP_SUBEVENT_START_STREAM_REQUESTED                       0x09u
 
 /**
  * @format 121            Indicates that media transfer is started.
@@ -3375,7 +3391,7 @@ typedef SSIZE_T ssize_t;
  * @param a2dp_cid
  * @param local_seid
  */
-#define A2DP_SUBEVENT_STREAM_STARTED                               0x09u
+#define A2DP_SUBEVENT_STREAM_STARTED                               0x0Au
 
 /**
  * @format 121           Stream is paused.
@@ -3383,7 +3399,7 @@ typedef SSIZE_T ssize_t;
  * @param a2dp_cid
  * @param local_seid
  */
-#define A2DP_SUBEVENT_STREAM_SUSPENDED                              0x0Au
+#define A2DP_SUBEVENT_STREAM_SUSPENDED                              0x0Bu
 
 /**
  * @format 121           Stream is stopped or aborted.
@@ -3391,7 +3407,7 @@ typedef SSIZE_T ssize_t;
  * @param a2dp_cid
  * @param local_seid
  */
-#define A2DP_SUBEVENT_STREAM_STOPPED                                0x0Bu
+#define A2DP_SUBEVENT_STREAM_STOPPED                                0x0Cu
 
 /**
  * @format 121            Stream is released.
@@ -3399,7 +3415,7 @@ typedef SSIZE_T ssize_t;
  * @param a2dp_cid
  * @param local_seid
  */
-#define A2DP_SUBEVENT_STREAM_RELEASED                               0x0Cu
+#define A2DP_SUBEVENT_STREAM_RELEASED                               0x0Du
 
 /**
  * @format 1211
@@ -3408,7 +3424,7 @@ typedef SSIZE_T ssize_t;
  * @param local_seid
  * @param signal_identifier
  */
-#define A2DP_SUBEVENT_COMMAND_ACCEPTED                              0x0Du
+#define A2DP_SUBEVENT_COMMAND_ACCEPTED                              0x0Eu
 
 /**
  * @format 12111
@@ -3418,7 +3434,7 @@ typedef SSIZE_T ssize_t;
  * @param is_initiator
  * @param signal_identifier
  */
-#define A2DP_SUBEVENT_COMMAND_REJECTED                              0x0Eu
+#define A2DP_SUBEVENT_COMMAND_REJECTED                              0x0Fu
 
 /**
  * @format 12B21
@@ -3428,14 +3444,14 @@ typedef SSIZE_T ssize_t;
  * @param con_handle
  * @param status 0 == OK
  */
-#define A2DP_SUBEVENT_SIGNALING_CONNECTION_ESTABLISHED              0x0Fu
+#define A2DP_SUBEVENT_SIGNALING_CONNECTION_ESTABLISHED              0x10u
 
 /**
  * @format 12            Signaling channel is released.
  * @param subevent_code
  * @param a2dp_cid
  */
-#define A2DP_SUBEVENT_SIGNALING_CONNECTION_RELEASED                  0x10u
+#define A2DP_SUBEVENT_SIGNALING_CONNECTION_RELEASED                  0x11u
 
 /**
  * @format 1211          Stream was reconfigured
