@@ -2497,17 +2497,19 @@ uint8_t hfp_hf_query_subscriber_number(hci_con_handle_t acl_handle){
     return ERROR_CODE_SUCCESS;
 }
 
-uint8_t hfp_hf_set_hf_indicator(int assigned_number, int value) {
-    // find index for assigned number
-    int indicator_index = -1;
+static int hfp_hf_get_hf_indicator_index(int assigned_number) {
     uint8_t i;
     for (i = 0; i < hfp_hf_indicators_nr ; i++) {
         if (hfp_hf_indicators[i] == assigned_number) {
-            indicator_index = i;
-            break;
+            return i;
         }
     }
+    return -1;
+}
 
+uint8_t hfp_hf_set_hf_indicator(int assigned_number, int value) {
+    // find index for assigned number
+    int indicator_index = hfp_hf_get_hf_indicator_index(assigned_number);
     if (indicator_index < 0){
         return ERROR_CODE_COMMAND_DISALLOWED;
     }
