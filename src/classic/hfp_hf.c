@@ -481,11 +481,11 @@ static int hfp_hf_cmd_exchange_supported_features(uint16_t cid){
 }
 
 static int hfp_hf_cmd_retrieve_indicators(uint16_t cid){
-    return hfp_hf_send_cmd_with_mark(cid, HFP_INDICATOR, "=?");
+    return hfp_hf_send_cmd_with_mark(cid, HFP_AG_INDICATOR, "=?");
 }
 
 static int hfp_hf_cmd_retrieve_indicators_status(uint16_t cid){
-    return hfp_hf_send_cmd_with_mark(cid, HFP_INDICATOR, "?");
+    return hfp_hf_send_cmd_with_mark(cid, HFP_AG_INDICATOR, "?");
 }
 
 static int hfp_hf_cmd_retrieve_can_hold_call(uint16_t cid){

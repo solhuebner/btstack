@@ -314,7 +314,7 @@ static int hfp_ag_indicators_cmd_generator_num_segments(hfp_connection_t * hfp_c
 // get size of individual segment for hfp_ag_retrieve_indicators_cmd
 static int hfp_ag_indicators_cmd_generator_get_segment_len(hfp_connection_t * hfp_connection, int index){
     if (index == 0) {
-        return (uint16_t) strlen(HFP_INDICATOR) + 3;   // "\n\r%s:""
+        return (uint16_t) strlen(HFP_AG_INDICATOR) + 3;   // "\n\r%s:""
     }
     index--;
     int num_indicators = hfp_ag_get_ag_indicators_nr(hfp_connection);
@@ -332,8 +332,8 @@ static void hfp_ag_indicators_cmd_generator_store_segment(hfp_connection_t * hfp
     if (index == 0){
         *buffer++ = '\r';
         *buffer++ = '\n';
-        int len = (uint16_t) strlen(HFP_INDICATOR);
-        (void)memcpy(buffer, HFP_INDICATOR, len);
+        int len = (uint16_t) strlen(HFP_AG_INDICATOR);
+        (void)memcpy(buffer, HFP_AG_INDICATOR, len);
         buffer += len;
         *buffer++ = ':';
         return;
@@ -443,7 +443,7 @@ static void hfp_ag_send_retrieve_indicators_cmd_via_generator(uint16_t cid, hfp_
 static int hfp_ag_send_retrieve_indicators_status_cmd(uint16_t cid){
     char buffer[40];
     const int size = sizeof(buffer);
-    int offset = btstack_snprintf_assert_complete(buffer, size, "\r\n%s:", HFP_INDICATOR);
+    int offset = btstack_snprintf_assert_complete(buffer, size, "\r\n%s:", HFP_AG_INDICATOR);
     offset += hfp_ag_indicators_status_join(buffer+offset, size-offset-9);
     offset += btstack_snprintf_assert_complete(buffer+offset, size-offset, "\r\n\r\nOK\r\n");
     return send_str_over_rfcomm(cid, buffer);
