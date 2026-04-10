@@ -433,10 +433,10 @@ static int hfp_hf_cmd_activate_status_update_for_ag_indicator(uint16_t cid, uint
     return send_str_over_rfcomm(cid, buffer);
 }
 
-static int hfp_hf_cmd_list_supported_generic_status_indicators(uint16_t cid){
+static int hfp_hf_cmd_list_supported_hf_indicators(uint16_t cid){
     char buffer[10 + HFP_MAX_NUM_INDICATORS*6];
     const int size = sizeof(buffer);
-    int offset = btstack_snprintf_assert_complete(buffer, size, "AT%s=", HFP_GENERIC_STATUS_INDICATOR);
+    int offset = btstack_snprintf_assert_complete(buffer, size, "AT%s=", HFP_HF_INDICATOR);
     offset += hfp_join_uint16(buffer+offset, size-offset, hfp_hf_indicators, hfp_hf_indicators_nr);
     offset += btstack_snprintf_assert_complete(buffer+offset, size-offset, "\r");
     return send_str_over_rfcomm(cid, buffer);
@@ -492,12 +492,12 @@ static int hfp_hf_cmd_retrieve_can_hold_call(uint16_t cid){
     return hfp_hf_send_cmd_with_mark(cid, HFP_SUPPORT_CALL_HOLD_AND_MULTIPARTY_SERVICES, "=?");
 }
 
-static int hfp_hf_cmd_retrieve_supported_generic_status_indicators(uint16_t cid){
-    return hfp_hf_send_cmd_with_mark(cid, HFP_GENERIC_STATUS_INDICATOR, "=?");
+static int hfp_hf_cmd_retrieve_supported_hf_indicators(uint16_t cid){
+    return hfp_hf_send_cmd_with_mark(cid, HFP_HF_INDICATOR, "=?");
 }
 
-static int hfp_hf_cmd_list_initial_supported_generic_status_indicators(uint16_t cid){
-    return hfp_hf_send_cmd_with_mark(cid, HFP_GENERIC_STATUS_INDICATOR, "?");
+static int hfp_hf_cmd_list_initial_supported_hf_indicators(uint16_t cid){
+    return hfp_hf_send_cmd_with_mark(cid, HFP_HF_INDICATOR, "?");
 }
 
 static int hfp_hf_cmd_query_operator_name_format(uint16_t cid){
@@ -589,17 +589,17 @@ static bool hfp_hf_run_for_context_service_level_connection(hfp_connection_t * h
             hfp_connection->state = HFP_W4_RETRIEVE_CAN_HOLD_CALL;
             hfp_hf_cmd_retrieve_can_hold_call(hfp_connection->rfcomm_cid);
             break;
-        case HFP_LIST_GENERIC_STATUS_INDICATORS:
-            hfp_connection->state = HFP_W4_LIST_GENERIC_STATUS_INDICATORS;
-            hfp_hf_cmd_list_supported_generic_status_indicators(hfp_connection->rfcomm_cid);
+        case HFP_LIST_HF_INDICATORS:
+            hfp_connection->state = HFP_W4_LIST_HF_INDICATORS;
+            hfp_hf_cmd_list_supported_hf_indicators(hfp_connection->rfcomm_cid);
             break;
-        case HFP_RETRIEVE_GENERIC_STATUS_INDICATORS:
-            hfp_connection->state = HFP_W4_RETRIEVE_GENERIC_STATUS_INDICATORS;
-            hfp_hf_cmd_retrieve_supported_generic_status_indicators(hfp_connection->rfcomm_cid);
+        case HFP_RETRIEVE_HF_INDICATORS:
+            hfp_connection->state = HFP_W4_RETRIEVE_HF_INDICATORS;
+            hfp_hf_cmd_retrieve_supported_hf_indicators(hfp_connection->rfcomm_cid);
             break;
-        case HFP_RETRIEVE_INITITAL_STATE_GENERIC_STATUS_INDICATORS:
-            hfp_connection->state = HFP_W4_RETRIEVE_INITITAL_STATE_GENERIC_STATUS_INDICATORS;
-            hfp_hf_cmd_list_initial_supported_generic_status_indicators(hfp_connection->rfcomm_cid);
+        case HFP_RETRIEVE_INITIAL_STATE_HF_INDICATORS:
+            hfp_connection->state = HFP_W4_RETRIEVE_INITIAL_STATE_HF_INDICATORS;
+            hfp_hf_cmd_list_initial_supported_hf_indicators(hfp_connection->rfcomm_cid);
             break;
         default:
             return false;
@@ -1490,7 +1490,7 @@ static bool hfp_hf_switch_on_ag_response(hfp_connection_t *hfp_connection, uint8
                         break;
                     }
                     if (has_hf_indicators_feature(hfp_connection)){
-                        hfp_connection->state = HFP_LIST_GENERIC_STATUS_INDICATORS;
+                        hfp_connection->state = HFP_LIST_HF_INDICATORS;
                         break;
                     }
                     hfp_hf_slc_established(hfp_connection);
@@ -1498,21 +1498,21 @@ static bool hfp_hf_switch_on_ag_response(hfp_connection_t *hfp_connection, uint8
                 
                 case HFP_W4_RETRIEVE_CAN_HOLD_CALL:
                     if (has_hf_indicators_feature(hfp_connection)){
-                        hfp_connection->state = HFP_LIST_GENERIC_STATUS_INDICATORS;
+                        hfp_connection->state = HFP_LIST_HF_INDICATORS;
                         break;
                     }
                     hfp_hf_slc_established(hfp_connection);
                     break;
                 
-                case HFP_W4_LIST_GENERIC_STATUS_INDICATORS:
-                    hfp_connection->state = HFP_RETRIEVE_GENERIC_STATUS_INDICATORS;
+                case HFP_W4_LIST_HF_INDICATORS:
+                    hfp_connection->state = HFP_RETRIEVE_HF_INDICATORS;
                     break;
 
-                case HFP_W4_RETRIEVE_GENERIC_STATUS_INDICATORS:
-                    hfp_connection->state = HFP_RETRIEVE_INITITAL_STATE_GENERIC_STATUS_INDICATORS;
+                case HFP_W4_RETRIEVE_HF_INDICATORS:
+                    hfp_connection->state = HFP_RETRIEVE_INITIAL_STATE_HF_INDICATORS;
                     break;
                             
-                case HFP_W4_RETRIEVE_INITITAL_STATE_GENERIC_STATUS_INDICATORS:
+                case HFP_W4_RETRIEVE_INITIAL_STATE_HF_INDICATORS:
                     hfp_hf_slc_established(hfp_connection);
                     break;
                 case HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED:
@@ -2523,7 +2523,7 @@ uint8_t hfp_hf_set_hf_indicator(int assigned_number, int value) {
         hfp_connection_t * hfp_connection = (hfp_connection_t *)btstack_linked_list_iterator_next(&it);
         // check if connection ready and indicator enabled
         if ((hfp_connection->local_role == HFP_ROLE_HF) &&
-            (hfp_connection->state > HFP_LIST_GENERIC_STATUS_INDICATORS)) {
+            (hfp_connection->state > HFP_LIST_HF_INDICATORS)) {
             if (hfp_connection->hf_indicators_supported_by_ag[((uint8_t) indicator_index)].state != 0) {
                 hfp_connection->hf_indicators_supported_by_ag_update_bitmap |= (1 << (uint8_t) indicator_index);
                 hfp_hf_run_for_context(hfp_connection);

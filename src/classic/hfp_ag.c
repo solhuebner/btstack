@@ -370,7 +370,7 @@ static int hfp_ag_generic_indicators_initial_status_join(char * buffer, int buff
     int i;
     int offset = 0;
     for (i = 0; i < hfp_ag_generic_status_indicators_nr; i++) {
-        offset += btstack_snprintf_assert_complete(buffer+offset, buffer_size-offset, "\r\n%s:%d,%d\r\n", HFP_GENERIC_STATUS_INDICATOR, hfp_ag_generic_status_indicators[i].uuid, hfp_ag_generic_status_indicators[i].state);
+        offset += btstack_snprintf_assert_complete(buffer+offset, buffer_size-offset, "\r\n%s:%d,%d\r\n", HFP_HF_INDICATOR, hfp_ag_generic_status_indicators[i].uuid, hfp_ag_generic_status_indicators[i].state);
     }
     return offset;
 }
@@ -466,7 +466,7 @@ static int hfp_ag_send_list_supported_generic_status_indicators_cmd(uint16_t cid
 static int hfp_ag_send_retrieve_supported_generic_status_indicators_cmd(uint16_t cid){
     char buffer[40];
     const int size = sizeof(buffer);
-    int offset = btstack_snprintf_assert_complete(buffer, size, "\r\n%s:(", HFP_GENERIC_STATUS_INDICATOR);
+    int offset = btstack_snprintf_assert_complete(buffer, size, "\r\n%s:(", HFP_HF_INDICATOR);
     offset += hfp_ag_generic_indicators_join(buffer + offset, size - offset - 10);
     offset += btstack_snprintf_assert_complete(buffer+offset, size-offset, ")\r\n\r\nOK\r\n");
     return send_str_over_rfcomm(cid, buffer);
@@ -769,7 +769,7 @@ static int hfp_ag_run_for_context_service_level_connection(hfp_connection_t * hf
                 hfp_connection->state = HFP_W4_RETRIEVE_CAN_HOLD_CALL;
                 hfp_ag_send_ok(hfp_connection->rfcomm_cid);
             } else if (has_hf_indicators_feature(hfp_connection)){
-                hfp_connection->state = HFP_W4_LIST_GENERIC_STATUS_INDICATORS;
+                hfp_connection->state = HFP_W4_LIST_HF_INDICATORS;
                 hfp_ag_send_ok(hfp_connection->rfcomm_cid);
             } else {
                 hfp_ag_send_ok(hfp_connection->rfcomm_cid);
@@ -780,7 +780,7 @@ static int hfp_ag_run_for_context_service_level_connection(hfp_connection_t * hf
         case HFP_CMD_SUPPORT_CALL_HOLD_AND_MULTIPARTY_SERVICES:
             if (hfp_connection->state != HFP_W4_RETRIEVE_CAN_HOLD_CALL) break;
             if (has_hf_indicators_feature(hfp_connection)){
-                hfp_connection->state = HFP_W4_LIST_GENERIC_STATUS_INDICATORS;
+                hfp_connection->state = HFP_W4_LIST_HF_INDICATORS;
             }
             hfp_connection->command = HFP_CMD_NONE;
             hfp_ag_send_retrieve_can_hold_call_cmd(hfp_connection->rfcomm_cid);
@@ -789,22 +789,22 @@ static int hfp_ag_run_for_context_service_level_connection(hfp_connection_t * hf
             }
             return 1;
         
-        case HFP_CMD_LIST_GENERIC_STATUS_INDICATORS:
-            if (hfp_connection->state != HFP_W4_LIST_GENERIC_STATUS_INDICATORS) break;
-            hfp_connection->state = HFP_W4_RETRIEVE_GENERIC_STATUS_INDICATORS;
+        case HFP_CMD_LIST_HF_INDICATORS:
+            if (hfp_connection->state != HFP_W4_LIST_HF_INDICATORS) break;
+            hfp_connection->state = HFP_W4_RETRIEVE_HF_INDICATORS;
             hfp_connection->command = HFP_CMD_NONE;
             hfp_ag_send_list_supported_generic_status_indicators_cmd(hfp_connection->rfcomm_cid);
             return 1;
 
-        case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS:
-            if (hfp_connection->state != HFP_W4_RETRIEVE_GENERIC_STATUS_INDICATORS) break;
-            hfp_connection->state = HFP_W4_RETRIEVE_INITITAL_STATE_GENERIC_STATUS_INDICATORS; 
+        case HFP_CMD_RETRIEVE_HF_INDICATORS:
+            if (hfp_connection->state != HFP_W4_RETRIEVE_HF_INDICATORS) break;
+            hfp_connection->state = HFP_W4_RETRIEVE_INITIAL_STATE_HF_INDICATORS;
             hfp_connection->command = HFP_CMD_NONE;
             hfp_ag_send_retrieve_supported_generic_status_indicators_cmd(hfp_connection->rfcomm_cid);
             return 1;
 
-        case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS_STATE:
-            if (hfp_connection->state != HFP_W4_RETRIEVE_INITITAL_STATE_GENERIC_STATUS_INDICATORS) break;
+        case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
+            if (hfp_connection->state != HFP_W4_RETRIEVE_INITIAL_STATE_HF_INDICATORS) break;
             hfp_connection->command = HFP_CMD_NONE;
             hfp_ag_send_retrieve_initial_supported_generic_status_indicators_cmd(hfp_connection->rfcomm_cid);
             hfp_ag_slc_established(hfp_connection);

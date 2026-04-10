@@ -1175,9 +1175,9 @@ static hfp_command_entry_t hfp_ag_command_table[] = {
     { "AT+BCS=",   HFP_CMD_HF_CONFIRMED_CODEC },
     { "AT+BIA=",   HFP_CMD_ENABLE_INDIVIDUAL_AG_INDICATOR_STATUS_UPDATE, }, // +BIA:<enabled>,,<enabled>,,,<enabled>
     { "AT+BIEV=",  HFP_CMD_HF_INDICATOR_STATUS },
-    { "AT+BIND=",  HFP_CMD_LIST_GENERIC_STATUS_INDICATORS },
-    { "AT+BIND=?", HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS },
-    { "AT+BIND?",  HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS_STATE },
+    { "AT+BIND=",  HFP_CMD_LIST_HF_INDICATORS },
+    { "AT+BIND=?", HFP_CMD_RETRIEVE_HF_INDICATORS },
+    { "AT+BIND?",  HFP_CMD_RETRIEVE_HF_INDICATORS_STATE },
     { "AT+BINP=",  HFP_CMD_HF_REQUEST_PHONE_NUMBER },
     { "AT+BLDN",   HFP_CMD_REDIAL_LAST_NUMBER },
     { "AT+BRSF=",  HFP_CMD_SUPPORTED_FEATURES },
@@ -1208,7 +1208,7 @@ static hfp_command_entry_t hfp_ag_command_table[] = {
 
 static hfp_command_entry_t hfp_hf_command_table[] = {
     { "+BCS:",  HFP_CMD_AG_SUGGESTED_CODEC },
-    { "+BIND:", HFP_CMD_SET_GENERIC_STATUS_INDICATOR_STATUS },
+    { "+BIND:", HFP_CMD_SET_HF_INDICATOR_ENABLED_STATUS },
     { "+BINP:", HFP_CMD_AG_SENT_PHONE_NUMBER },
     { "+BRSF:", HFP_CMD_SUPPORTED_FEATURES },
     { "+BSIR:", HFP_CMD_CHANGE_IN_BAND_RING_TONE_SETTING },
@@ -1481,7 +1481,7 @@ static bool hfp_parse_byte(hfp_connection_t * hfp_connection, uint8_t byte, int 
                 case HFP_CMD_QUERY_OPERATOR_SELECTION_NAME:
                 case HFP_CMD_QUERY_OPERATOR_SELECTION_NAME_FORMAT:
                 case HFP_CMD_RETRIEVE_AG_INDICATORS:
-                case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS_STATE:
+                case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
                 case HFP_CMD_HF_INDICATOR_STATUS:
                     hfp_connection->parser_state = HFP_PARSER_SECOND_ITEM;
                     break;
@@ -1504,9 +1504,9 @@ static bool hfp_parse_byte(hfp_connection_t * hfp_connection, uint8_t byte, int 
                     log_info("format %s \n", hfp_connection->line_buffer);
                     hfp_connection->network_operator.format =  btstack_atoi((char *)&hfp_connection->line_buffer[0]);
                     break;
-                case HFP_CMD_LIST_GENERIC_STATUS_INDICATORS:
-                case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS:
-                case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS_STATE:
+                case HFP_CMD_LIST_HF_INDICATORS:
+                case HFP_CMD_RETRIEVE_HF_INDICATORS:
+                case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
                     hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_item_index].state = (uint8_t)btstack_atoi((char*)hfp_connection->line_buffer);
                     break;
                 case HFP_CMD_TRANSFER_AG_INDICATOR_STATUS:
@@ -1594,7 +1594,7 @@ void hfp_parse(hfp_connection_t * hfp_connection, uint8_t byte, int isHandsFree)
 static void parse_sequence(hfp_connection_t * hfp_connection){
     int value;
     switch (hfp_connection->command){
-        case HFP_CMD_SET_GENERIC_STATUS_INDICATOR_STATUS:
+        case HFP_CMD_SET_HF_INDICATOR_ENABLED_STATUS:
             value = btstack_atoi((char *)&hfp_connection->line_buffer[0]);
             int i;
             switch (hfp_connection->parser_item_index){
@@ -1741,13 +1741,13 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             hfp_connection->remote_call_services[hfp_connection->remote_call_services_index].name[HFP_CALL_SERVICE_SIZE - 1] = 0;
             hfp_next_remote_call_services_index(hfp_connection);
             break;
-        case HFP_CMD_LIST_GENERIC_STATUS_INDICATORS:
-        case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS:
+        case HFP_CMD_LIST_HF_INDICATORS:
+        case HFP_CMD_RETRIEVE_HF_INDICATORS:
             log_info("Parsed Generic status indicator: %s\n", hfp_connection->line_buffer);
             hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_item_index].uuid = (uint16_t)btstack_atoi((char*)hfp_connection->line_buffer);
             hfp_next_indicators_index(hfp_connection);
             break;
-        case HFP_CMD_RETRIEVE_GENERIC_STATUS_INDICATORS_STATE:
+        case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
             // HF parses initial AG gen. ind. state
             log_info("Parsed List generic status indicator %s state: ", hfp_connection->line_buffer);
             hfp_connection->parser_item_index = hfp_parse_indicator_index(hfp_connection);
