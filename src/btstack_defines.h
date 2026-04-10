@@ -2779,13 +2779,22 @@ typedef SSIZE_T ssize_t;
 #define HFP_SUBEVENT_HF_INDICATOR                                    0x27u
 
 /**
+ * @format 1H21
+ * @param subevent_code
+ * @param acl_handle
+ * @param uuid
+ * @param enabled
+ */
+#define HFP_SUBEVENT_HF_INDICATOR_STATE                              0x28u
+
+/**
  * @format 1H2T
  * @param subevent_code
  * @param acl_handle
  * @param command_id
  * @param command_string
  */
-#define HFP_SUBEVENT_CUSTOM_AT_COMMAND                               0x28u
+#define HFP_SUBEVENT_CUSTOM_AT_COMMAND                               0x29u
 
 /**
  * @format 1H1
@@ -2793,7 +2802,7 @@ typedef SSIZE_T ssize_t;
  * @param acl_handle
  * @param status 0 == OK
  */
-#define HFP_SUBEVENT_CUSTOM_AT_MESSAGE_SENT                          0x29u
+#define HFP_SUBEVENT_CUSTOM_AT_MESSAGE_SENT                          0x2Au
 
 /**
  * @format 1H1
@@ -2801,7 +2810,7 @@ typedef SSIZE_T ssize_t;
  * @param acl_handle
  * @param supported
  */
-#define HFP_SUBEVENT_APPLE_EXTENSION_SUPPORTED                       0x2Au
+#define HFP_SUBEVENT_APPLE_EXTENSION_SUPPORTED                       0x2Bu
 
 /**
  * @format 1H221JV
@@ -2813,7 +2822,7 @@ typedef SSIZE_T ssize_t;
  * @param version_len
  * @param version
  */
-#define HFP_SUBEVENT_APPLE_ACCESSORY_INFORMATION                     0x2Bu
+#define HFP_SUBEVENT_APPLE_ACCESSORY_INFORMATION                     0x2Cu
 
 /**
  * @format 1H1
@@ -2821,7 +2830,7 @@ typedef SSIZE_T ssize_t;
  * @param acl_handle
  * @param battery_level range:0..9
  */
-#define HFP_SUBEVENT_APPLE_BATTERY_LEVEL                             0x2Cu
+#define HFP_SUBEVENT_APPLE_BATTERY_LEVEL                             0x2Du
 
 /**
  * @format 1H1
@@ -2829,7 +2838,7 @@ typedef SSIZE_T ssize_t;
  * @param acl_handle
  * @param docket 0 = undocked, 1 = docked
  */
-#define HFP_SUBEVENT_APPLE_DOCKED_STATE                              0x2Du
+#define HFP_SUBEVENT_APPLE_DOCKED_STATE                              0x2Eu
 
 
 // ANCS Client
