@@ -1193,7 +1193,7 @@ static hfp_command_entry_t hfp_ag_command_table[] = {
     { "AT+CLCC",   HFP_CMD_LIST_CURRENT_CALLS },
     { "AT+CLIP=",  HFP_CMD_ENABLE_CLIP},
     { "AT+CMEE=",  HFP_CMD_ENABLE_EXTENDED_AUDIO_GATEWAY_ERROR},
-    { "AT+CMER=",  HFP_CMD_ENABLE_INDICATOR_STATUS_UPDATE },
+    { "AT+CMER=",  HFP_CMD_ENABLE_AG_INDICATOR_STATUS_UPDATE },
     { "AT+CNUM",   HFP_CMD_GET_SUBSCRIBER_NUMBER_INFORMATION },
     { "AT+COPS=",  HFP_CMD_QUERY_OPERATOR_SELECTION_NAME_FORMAT },
     { "AT+COPS?",  HFP_CMD_QUERY_OPERATOR_SELECTION_NAME },
@@ -1417,10 +1417,10 @@ static bool hfp_parse_byte(hfp_connection_t * hfp_connection, uint8_t byte, int 
             // pick +CIND version based on connection state: descriptions during SLC vs. states later
             if (hfp_connection->command == HFP_CMD_RETRIEVE_AG_INDICATORS_GENERIC){
                 switch(hfp_connection->state){
-                    case HFP_W4_RETRIEVE_INDICATORS_STATUS:
+                    case HFP_W4_RETRIEVE_AG_INDICATORS_STATUS:
                         hfp_connection->command = HFP_CMD_RETRIEVE_AG_INDICATORS_STATUS;
                         break;
-                    case HFP_W4_RETRIEVE_INDICATORS:
+                    case HFP_W4_RETRIEVE_AG_INDICATORS:
                         hfp_connection->command = HFP_CMD_RETRIEVE_AG_INDICATORS;
                         break;
                     default:
@@ -1727,7 +1727,7 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             hfp_connection->ag_indicators[hfp_connection->parser_item_index].status = btstack_atoi((char *) hfp_connection->line_buffer);
             hfp_next_indicators_index(hfp_connection);
             break;
-        case HFP_CMD_ENABLE_INDICATOR_STATUS_UPDATE:
+        case HFP_CMD_ENABLE_AG_INDICATOR_STATUS_UPDATE:
             hfp_next_indicators_index(hfp_connection);
             if (hfp_connection->parser_item_index != 4) break;
             log_info("Parsed Enable indicators: %s\n", hfp_connection->line_buffer);

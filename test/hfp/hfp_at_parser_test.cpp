@@ -385,7 +385,7 @@ TEST(HFPParser, HFP_AG_GENERIC_STATUS_INDICATOR){
 TEST(HFPParser, HFP_AG_ENABLE_INDICATOR_STATUS_UPDATE){
     snprintf(packet, sizeof(packet), "\r\nAT%s=3,0,0,1\r\n", HFP_ENABLE_STATUS_UPDATE_FOR_AG_INDICATORS);
     parse_ag(packet);
-    CHECK_EQUAL(HFP_CMD_ENABLE_INDICATOR_STATUS_UPDATE, context.command);
+    CHECK_EQUAL(HFP_CMD_ENABLE_AG_INDICATOR_STATUS_UPDATE, context.command);
     CHECK_EQUAL(1, context.enable_status_update_for_ag_indicators);
 }
 

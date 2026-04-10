@@ -480,11 +480,11 @@ static int hfp_hf_cmd_exchange_supported_features(uint16_t cid){
     return hfp_hf_send_cmd_with_int(cid, HFP_SUPPORTED_FEATURES, hfp_hf_supported_features);
 }
 
-static int hfp_hf_cmd_retrieve_indicators(uint16_t cid){
+static int hfp_hf_cmd_retrieve_ag_indicators(uint16_t cid){
     return hfp_hf_send_cmd_with_mark(cid, HFP_AG_INDICATOR, "=?");
 }
 
-static int hfp_hf_cmd_retrieve_indicators_status(uint16_t cid){
+static int hfp_hf_cmd_retrieve_ag_indicators_status(uint16_t cid){
     return hfp_hf_send_cmd_with_mark(cid, HFP_AG_INDICATOR, "?");
 }
 
@@ -573,16 +573,16 @@ static bool hfp_hf_run_for_context_service_level_connection(hfp_connection_t * h
             hfp_connection->state = HFP_W4_NOTIFY_ON_CODECS;
             hfp_hf_cmd_notify_on_codecs(hfp_connection->rfcomm_cid);
             break;
-        case HFP_RETRIEVE_INDICATORS:
-            hfp_connection->state = HFP_W4_RETRIEVE_INDICATORS;
-            hfp_hf_cmd_retrieve_indicators(hfp_connection->rfcomm_cid);
+        case HFP_RETRIEVE_AG_INDICATORS:
+            hfp_connection->state = HFP_W4_RETRIEVE_AG_INDICATORS;
+            hfp_hf_cmd_retrieve_ag_indicators(hfp_connection->rfcomm_cid);
             break;
-        case HFP_RETRIEVE_INDICATORS_STATUS:
-            hfp_connection->state = HFP_W4_RETRIEVE_INDICATORS_STATUS;
-            hfp_hf_cmd_retrieve_indicators_status(hfp_connection->rfcomm_cid);
+        case HFP_RETRIEVE_AG_INDICATORS_STATUS:
+            hfp_connection->state = HFP_W4_RETRIEVE_AG_INDICATORS_STATUS;
+            hfp_hf_cmd_retrieve_ag_indicators_status(hfp_connection->rfcomm_cid);
             break;
-        case HFP_ENABLE_INDICATORS_STATUS_UPDATE:
-            hfp_connection->state = HFP_W4_ENABLE_INDICATORS_STATUS_UPDATE;
+        case HFP_ENABLE_AG_INDICATORS_STATUS_UPDATE:
+            hfp_connection->state = HFP_W4_ENABLE_AG_INDICATORS_STATUS_UPDATE;
             hfp_hf_cmd_activate_status_update_for_all_ag_indicators(hfp_connection->rfcomm_cid, 1);
             break;
         case HFP_RETRIEVE_CAN_HOLD_CALL:
@@ -617,7 +617,7 @@ static bool hfp_hf_run_for_context_service_level_connection_queries(hfp_connecti
         uint8_t enable = hfp_connection->enable_status_update_for_ag_indicators;
         hfp_connection->enable_status_update_for_ag_indicators = 0xFF;
         hfp_connection->ok_pending = 1;
-        hfp_connection->response_pending_for_command = HFP_CMD_ENABLE_INDICATOR_STATUS_UPDATE;
+        hfp_connection->response_pending_for_command = HFP_CMD_ENABLE_AG_INDICATOR_STATUS_UPDATE;
         hfp_hf_cmd_activate_status_update_for_all_ag_indicators(hfp_connection->rfcomm_cid, enable);
         return true;
     };
@@ -1440,7 +1440,7 @@ static bool hfp_hf_switch_on_ag_response(hfp_connection_t *hfp_connection, uint8
 
     switch (response_pending_for_command){
         case HFP_CMD_ENABLE_INDIVIDUAL_AG_INDICATOR_STATUS_UPDATE:
-        case HFP_CMD_ENABLE_INDICATOR_STATUS_UPDATE:
+        case HFP_CMD_ENABLE_AG_INDICATOR_STATUS_UPDATE:
         case HFP_CMD_ENABLE_EXTENDED_AUDIO_GATEWAY_ERROR:
             hfp_ag_emit_event(hfp_connection, HFP_SUBEVENT_COMPLETE, status);
             break;
@@ -1469,22 +1469,22 @@ static bool hfp_hf_switch_on_ag_response(hfp_connection_t *hfp_connection, uint8
                         hfp_connection->state = HFP_NOTIFY_ON_CODECS;
                         break;
                     } 
-                    hfp_connection->state = HFP_RETRIEVE_INDICATORS;
+                    hfp_connection->state = HFP_RETRIEVE_AG_INDICATORS;
                     break;
 
                 case HFP_W4_NOTIFY_ON_CODECS:
-                    hfp_connection->state = HFP_RETRIEVE_INDICATORS;
+                    hfp_connection->state = HFP_RETRIEVE_AG_INDICATORS;
                     break;   
                 
-                case HFP_W4_RETRIEVE_INDICATORS:
-                    hfp_connection->state = HFP_RETRIEVE_INDICATORS_STATUS; 
+                case HFP_W4_RETRIEVE_AG_INDICATORS:
+                    hfp_connection->state = HFP_RETRIEVE_AG_INDICATORS_STATUS;
                     break;
                 
-                case HFP_W4_RETRIEVE_INDICATORS_STATUS:
-                    hfp_connection->state = HFP_ENABLE_INDICATORS_STATUS_UPDATE;
+                case HFP_W4_RETRIEVE_AG_INDICATORS_STATUS:
+                    hfp_connection->state = HFP_ENABLE_AG_INDICATORS_STATUS_UPDATE;
                     break;
                     
-                case HFP_W4_ENABLE_INDICATORS_STATUS_UPDATE:
+                case HFP_W4_ENABLE_AG_INDICATORS_STATUS_UPDATE:
                     if (has_call_waiting_and_3way_calling_feature(hfp_connection)){
                         hfp_connection->state = HFP_RETRIEVE_CAN_HOLD_CALL;
                         break;
