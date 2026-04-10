@@ -2524,7 +2524,8 @@ uint8_t hfp_hf_set_hf_indicator(int assigned_number, int value) {
         // check if connection ready and indicator enabled
         if ((hfp_connection->local_role == HFP_ROLE_HF) &&
             (hfp_connection->state > HFP_LIST_HF_INDICATORS)) {
-            if (hfp_connection->hf_indicators_supported_by_ag[((uint8_t) indicator_index)].state != 0) {
+            if ((hfp_connection->hf_indicators_supported_by_ag[((uint8_t) indicator_index)].uuid != 0) &&
+                (hfp_connection->hf_indicators_supported_by_ag[((uint8_t) indicator_index)].state != 0)){
                 hfp_connection->hf_indicators_supported_by_ag_update_bitmap |= (1 << (uint8_t) indicator_index);
                 hfp_hf_run_for_context(hfp_connection);
             }
