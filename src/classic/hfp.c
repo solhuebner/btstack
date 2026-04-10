@@ -1454,6 +1454,14 @@ static bool hfp_parse_byte(hfp_connection_t * hfp_connection, uint8_t byte, int 
                 return true;
             }
 
+            // pick +BIND version based on opening brace
+            if ((hfp_connection->command == HFP_CMD_SET_HF_INDICATOR_ENABLED_STATUS) &&
+                (hfp_connection->line_size == 0) &&
+                (byte == '(')){
+                hfp_connection->command = HFP_CMD_LIST_HF_INDICATORS;
+                return true;
+            }
+
             hfp_parser_store_if_token(hfp_connection, byte);
             if (!hfp_parser_is_separator(byte)) return true;
 
