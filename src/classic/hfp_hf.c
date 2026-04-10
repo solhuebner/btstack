@@ -190,6 +190,17 @@ static void hfp_hf_emit_simple_event(hfp_connection_t * hfp_connection, uint8_t 
     (*hfp_hf_callback)(HCI_EVENT_PACKET, 0, event, sizeof(event));
 }
 
+static void hfp_hf_emit_hf_indicator_enabled(const hfp_connection_t * hfp_connection, uint8_t indicator_index){
+    uint8_t event[8];
+    event[0] = HCI_EVENT_HFP_META;
+    event[1] = sizeof(event) - 2;
+    event[2] = HFP_SUBEVENT_HF_INDICATOR_STATE;
+    little_endian_store_16(event, 3, hfp_connection->acl_handle);
+    little_endian_store_16(event, 5, hfp_hf_indicators[indicator_index]);
+    event[7] = hfp_connection->hf_indicators_supported_by_ag[indicator_index].enabled ? 1u : 0u;
+    (*hfp_hf_callback)(HCI_EVENT_PACKET, 0, event, sizeof(event));
+}
+
 static void hfp_hf_emit_slc_connection_event(uint8_t status, hci_con_handle_t con_handle, bd_addr_t addr){
     uint8_t event[12];
     int pos = 0;
@@ -1704,6 +1715,11 @@ static void hfp_hf_handle_rfcomm_command(hfp_connection_t * hfp_connection, hfp_
 			break;
         case HFP_CMD_CHANGE_IN_BAND_RING_TONE_SETTING:
             hfp_ag_emit_event(hfp_connection, HFP_SUBEVENT_IN_BAND_RING_TONE, get_bit(hfp_connection->remote_supported_features, HFP_AGSF_IN_BAND_RING_TONE));
+            break;
+        case HFP_CMD_SET_HF_INDICATOR_ENABLED_STATUS:
+            if (hfp_connection->parser_indicator_index >= 0) {
+                hfp_hf_emit_hf_indicator_enabled(hfp_connection, hfp_connection->parser_indicator_index);
+            }
             break;
         case HFP_CMD_CUSTOM_MESSAGE:
             hfp_parser_reset_line_buffer(hfp_connection);
