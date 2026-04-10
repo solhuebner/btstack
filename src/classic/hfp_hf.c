@@ -2507,6 +2507,34 @@ static int hfp_hf_get_hf_indicator_index(int assigned_number) {
     return -1;
 }
 
+bool hfp_hf_is_hf_indicator_supported_by_ag(hci_con_handle_t acl_handle, uint8_t assigned_number) {
+    hfp_connection_t * hfp_connection = get_hfp_hf_connection_context_for_acl_handle(acl_handle);
+    if (hfp_connection == NULL) {
+        return false;
+    }
+
+    int indicator_index = hfp_hf_get_hf_indicator_index(assigned_number);
+    if (indicator_index < 0) {
+        return false;
+    }
+
+    return hfp_connection->hf_indicators_supported_by_ag[(uint8_t) indicator_index].supported;
+}
+
+bool hfp_hf_is_hf_indicator_enabled_by_ag(hci_con_handle_t acl_handle, uint8_t assigned_number) {
+    hfp_connection_t * hfp_connection = get_hfp_hf_connection_context_for_acl_handle(acl_handle);
+    if (hfp_connection == NULL) {
+        return false;
+    }
+
+    int indicator_index = hfp_hf_get_hf_indicator_index(assigned_number);
+    if (indicator_index < 0) {
+        return false;
+    }
+
+    return hfp_connection->hf_indicators_supported_by_ag[(uint8_t) indicator_index].enabled;
+}
+
 uint8_t hfp_hf_set_hf_indicator(int assigned_number, int value) {
     // find index for assigned number
     int indicator_index = hfp_hf_get_hf_indicator_index(assigned_number);
