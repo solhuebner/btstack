@@ -1075,6 +1075,9 @@ static void a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint
             printf("A2DP Source: Connected to address %s, a2dp cid 0x%02x, local seid 0x%02x.\n", bd_addr_to_str(address), a2dp_conn->a2dp_cid, a2dp_conn->a2dp_local_seid);
             break;
 
+        case AVDTP_SUBEVENT_SIGNALING_MEDIA_CODEC_MPEG_D_USAC_CONFIGURATION:
+            printf("A2DP  Sink      : Received MPEG_D_USAC codec - not implemented\n");
+            break;
         case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION:
             printf("A2DP  Sink      : Received non SBC codec - not implemented\n");
             break;

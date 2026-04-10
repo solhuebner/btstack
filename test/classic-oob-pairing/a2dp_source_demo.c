@@ -644,6 +644,12 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             printf("A2DP Source: Connected to address %s, a2dp cid 0x%02x, local seid 0x%02x.\n", bd_addr_to_str(address), media_tracker.a2dp_cid, media_tracker.local_seid);
             break;
 
+        case AVDTP_SUBEVENT_SIGNALING_MEDIA_CODEC_MPEG_D_USAC_CONFIGURATION:
+            printf("A2DP  Source      : Received MPEG_D_USAC codec - not implemented\n");
+            break;
+        case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION:
+            printf("A2DP  Source      : Received non SBC codec - not implemented\n");
+            break;
         case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_SBC_CONFIGURATION:
             cid  = a2dp_subevent_signaling_media_codec_sbc_configuration_get_a2dp_cid(packet);
             if (cid != media_tracker.a2dp_cid) return;
@@ -790,7 +796,7 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             local_seid = a2dp_subevent_stream_started_get_local_seid(packet);
             cid = a2dp_subevent_stream_started_get_a2dp_cid(packet);
 
-            if (local_seid != media_tracker.local_seid){
+            if (local_seid != media_mpegd_sbc_local_seid){
                 printf("A2DP Source: Stream started on non-SBC endpoint (local_seid 0x%02x), media payload generation not implemented\n", local_seid);
                 break;
             }
