@@ -535,6 +535,11 @@ typedef struct{
     uint8_t state; // enabled
 } hfp_generic_status_indicator_t;
 
+typedef struct {
+    bool supported;
+    bool enabled;
+} hfp_hf_indicator_state_in_ag_t;
+
 typedef struct{
     uint8_t index;
     char name[HFP_MAX_INDICATOR_DESC_SIZE];
@@ -608,7 +613,7 @@ typedef struct hfp_connection {
     // HF indicators supported by AG, only used by HF.
     // Retrieved during SLC establishment on AT+BIND query as +BIND response
     uint32_t hf_indicators_supported_by_ag_update_bitmap;
-    hfp_generic_status_indicator_t hf_indicators_supported_by_ag[HFP_MAX_NUM_INDICATORS];
+    hfp_hf_indicator_state_in_ag_t hf_indicators_supported_by_ag[HFP_MAX_NUM_INDICATORS];
 
     hfp_network_opearator_t network_operator;
     

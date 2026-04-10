@@ -1607,7 +1607,7 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
                     break;
                 case 1:
                     if (hfp_connection->parser_indicator_index >= 0) {
-                        hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_indicator_index].state = value;
+                        hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_indicator_index].enabled = value;
                         log_info("HFP_CMD_SET_HF_INDICATOR_ENABLED_STATUS set indicator at index %u, to %u\n",
                                  hfp_connection->parser_item_index, value);
                     }
@@ -1750,7 +1750,7 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             hfp_connection->parser_indicator_index = hfp_get_hf_indicator_index(value);
             log_info("Parsed HF Indicator %u -> index %d\n", value, hfp_connection->parser_indicator_index);
             if (hfp_connection->parser_indicator_index >= 0) {
-                hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_indicator_index].uuid = value;
+                hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_indicator_index].supported = true;
             }
             break;
         case HFP_CMD_ENABLE_INDIVIDUAL_AG_INDICATOR_STATUS_UPDATE:
