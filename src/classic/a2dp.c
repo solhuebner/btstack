@@ -772,8 +772,14 @@ void a2dp_config_process_avdtp_event_handler(avdtp_role_t role, uint8_t *packet,
             a2dp_replace_subevent_id_and_emit_for_role(role, packet, size,
                                                      A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_ATRAC_CONFIGURATION);
             break;
+        case AVDTP_SUBEVENT_SIGNALING_MEDIA_CODEC_MPEG_D_USAC_CONFIGURATION:
+            local_seid = avdtp_subevent_signaling_media_codec_mpeg_d_usac_configuration_get_local_seid(packet);
+            a2dp_config_process_handle_media_configuration(role, packet, local_seid);
+            a2dp_replace_subevent_id_and_emit_for_role(role, packet, size,
+                                                       A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_MPEG_D_USAC_CONFIGURATION);
+            break;
         case AVDTP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION:
-            local_seid = avdtp_subevent_signaling_media_codec_sbc_configuration_get_local_seid(packet);
+            local_seid = avdtp_subevent_signaling_media_codec_other_configuration_get_local_seid(packet);
             a2dp_config_process_handle_media_configuration(role, packet, local_seid);
             a2dp_replace_subevent_id_and_emit_for_role(role, packet, size,
                                                      A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION);
