@@ -222,6 +222,16 @@ const char * hfp_enhanced_call_mpty2str(uint16_t index){
     return "not defined";
 }
 
+static int hfp_get_hf_indicator_index(int assigned_number) {
+    uint8_t i;
+    for (i = 0; i < hfp_hf_indicators_nr ; i++) {
+        if (hfp_hf_indicators[i] == assigned_number) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static uint16_t hfp_parse_indicator_index(hfp_connection_t * hfp_connection){
     uint16_t index = btstack_atoi((char *)&hfp_connection->line_buffer[0]);
 
@@ -1589,14 +1599,7 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             int i;
             switch (hfp_connection->parser_item_index){
                 case 0:
-                    // find indicator index
-                    hfp_connection->parser_indicator_index = -1;
-                    for (i=0;i<hfp_hf_indicators_nr;i++){
-                        if (hfp_hf_indicators[i] == value){
-                            hfp_connection->parser_indicator_index = i;
-                            break;
-                        }
-                    }
+                    hfp_connection->parser_indicator_index = hfp_get_hf_indicator_index(value);
                     break;
                 case 1:
                     if (hfp_connection->parser_indicator_index >= 0) {
@@ -2422,6 +2425,7 @@ void hfp_set_hf_indicators(uint8_t indicators_nr, const uint16_t* indicators) {
     hfp_hf_indicators_nr = indicators_nr;
     hfp_hf_indicators = indicators;
 }
+
 static btstack_packet_callback_registration_t hfp_ag_hci_event_callback_registration;
 
 void hfp_init(void){
