@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - GAP: set LE Data Length for connection with gap_le_set_data_length
 - POSIX-H4: support newer CYW55xxx Controllers with --airoc-download-mode flag
 - ESP32: support external Bluetooth Controller
+- A2DP: support MPEG-D USAC configuration
 
 ### Fixed
 - A2DP: get capabilities of all streamendpoints
 - A2DP: avoid assert for outgoing connection to local Bluetooth address
+- AVDTP: fix serialization of MPEG-D USAC configuration
 
 ### Changed
 - GAP: LE link layer commands are sent sequentially
