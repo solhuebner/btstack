@@ -1607,18 +1607,19 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             switch (hfp_connection->parser_item_index){
                 case 0:
                     hfp_connection->parser_indicator_index = hfp_get_hf_indicator_index(value);
+                    hfp_connection->parser_item_index++;
                     break;
                 case 1:
                     if (hfp_connection->parser_indicator_index >= 0) {
                         hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_indicator_index].state = value;
-                        log_info("HFP_CMD_SET_GENERIC_STATUS_INDICATOR_STATUS set indicator at index %u, to %u\n",
+                        log_info("HFP_CMD_SET_HF_INDICATOR_ENABLED_STATUS set indicator at index %u, to %u\n",
                                  hfp_connection->parser_item_index, value);
                     }
+                    hfp_connection->parser_item_index++;
                     break;
                 default:
                     break;
             }
-            hfp_next_indicators_index(hfp_connection);
             break;
 
         case HFP_CMD_GET_SUBSCRIBER_NUMBER_INFORMATION:
@@ -1749,9 +1750,12 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             hfp_next_remote_call_services_index(hfp_connection);
             break;
         case HFP_CMD_LIST_HF_INDICATORS:
-            log_info("Parsed HF Indicator: %s\n", hfp_connection->line_buffer);
-            hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_item_index].uuid = (uint16_t)btstack_atoi((char*)hfp_connection->line_buffer);
-            hfp_next_indicators_index(hfp_connection);
+            value = (uint16_t)btstack_atoi((char*)hfp_connection->line_buffer);
+            hfp_connection->parser_indicator_index = hfp_get_hf_indicator_index(value);
+            log_info("Parsed HF Indicator %u -> index %d\n", value, hfp_connection->parser_indicator_index);
+            if (hfp_connection->parser_indicator_index >= 0) {
+                hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_indicator_index].uuid = value;
+            }
             break;
         case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
             // HF parses initial AG gen. ind. state
