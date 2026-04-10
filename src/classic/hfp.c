@@ -1741,13 +1741,13 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             hfp_next_remote_call_services_index(hfp_connection);
             break;
         case HFP_CMD_LIST_HF_INDICATORS:
-            log_info("Parsed Generic status indicator: %s\n", hfp_connection->line_buffer);
+            log_info("Parsed HF Indicator: %s\n", hfp_connection->line_buffer);
             hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_item_index].uuid = (uint16_t)btstack_atoi((char*)hfp_connection->line_buffer);
             hfp_next_indicators_index(hfp_connection);
             break;
         case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
             // HF parses initial AG gen. ind. state
-            log_info("Parsed List generic status indicator %s state: ", hfp_connection->line_buffer);
+            log_info("Parsed List HF indicator %s state: ", hfp_connection->line_buffer);
             hfp_connection->parser_item_index = hfp_parse_indicator_index(hfp_connection);
             break;
         case HFP_CMD_HF_INDICATOR_STATUS:
