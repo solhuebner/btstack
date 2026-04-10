@@ -1504,7 +1504,6 @@ static bool hfp_parse_byte(hfp_connection_t * hfp_connection, uint8_t byte, int 
                     log_info("format %s \n", hfp_connection->line_buffer);
                     hfp_connection->network_operator.format =  btstack_atoi((char *)&hfp_connection->line_buffer[0]);
                     break;
-                case HFP_CMD_LIST_HF_INDICATORS:
                 case HFP_CMD_RETRIEVE_HF_INDICATORS:
                 case HFP_CMD_RETRIEVE_HF_INDICATORS_STATE:
                     hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_item_index].state = (uint8_t)btstack_atoi((char*)hfp_connection->line_buffer);
@@ -1742,7 +1741,6 @@ static void parse_sequence(hfp_connection_t * hfp_connection){
             hfp_next_remote_call_services_index(hfp_connection);
             break;
         case HFP_CMD_LIST_HF_INDICATORS:
-        case HFP_CMD_RETRIEVE_HF_INDICATORS:
             log_info("Parsed Generic status indicator: %s\n", hfp_connection->line_buffer);
             hfp_connection->hf_indicators_supported_by_ag[hfp_connection->parser_item_index].uuid = (uint16_t)btstack_atoi((char*)hfp_connection->line_buffer);
             hfp_next_indicators_index(hfp_connection);
