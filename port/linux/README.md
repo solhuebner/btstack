@@ -5,7 +5,7 @@ While BTstack can directly work on Linux with most Bluetooth Controllers that ar
 
 ## Compilation
 
-In addition to regular C build tools, you also need the Bluetooth development package installed.
+In addition to regular C build tools (gcc, cmake, ninja), you also need the Bluetooth development package installed.
 
 	sudo apt install libbluetooth-dev
 
@@ -19,13 +19,31 @@ Now you can compile it as usual with CMake
 
 ## Running the examples
 
-Please make sure that BlueZ is not installed or at least disabled
+On some Linux systems, RF-kill is used to block Bluetooth. Please check with
+
+    sudo rfkill list    
+
+It should show something like this:
+
+    0: hci0: Bluetooth
+        Soft blocked: no
+        Hard blocked: no
+
+If it's blocked by software ('Soft blocked: yes'), you can unblock it with:
+
+    sudo rfkill unblock bluetooth
+
+
+Next, please make sure that BlueZ is not installed or at least stopped temporarily:
 
 	sudo systemctl stop bluetooth
+
+If you want to prevent BlueZ from starting up on next boot or caused by some OS action, you can disable it permanently:
+
 	sudo systemctl disable bluetooth
 	sudo systemctl mask bluetooth
 
-Also make sure that the chosen device (here, hci0) is down
+Finally, make sure that the chosen HCI device (here, hci0) is down
 
 	sudo hciconfig hci0 down
 
