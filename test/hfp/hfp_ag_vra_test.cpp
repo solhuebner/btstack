@@ -91,6 +91,7 @@ static uint8_t call_termiated = 0;
 
 static uint8_t last_received_event = 0;
 static uint8_t last_received_event_status = 0;
+static hfp_connection_t * active_hfp_connection = NULL;
 
 // static int supported_features_with_codec_negotiation = 438;
 static int supported_features_with_codec_negotiation =
@@ -204,6 +205,7 @@ TEST_GROUP(HFP_AG_VRA){
         static bd_addr_t bd_addr = { 1,2,3,4,5,6 };
         hfp_connection = test_hfp_create_connection(bd_addr, HFP_ROLE_AG);
         btstack_assert(hfp_connection != NULL);
+        active_hfp_connection = hfp_connection;
         hfp_connection->state = HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED;
         hfp_connection->acl_handle = 0x1234;
         hfp_connection->remote_supported_features |= (1<<HFP_AGSF_ENHANCED_VOICE_RECOGNITION_STATUS);
@@ -303,6 +305,7 @@ TEST_GROUP(HFP_AG_VRA){
         audio_connection_established = 0;
         last_received_event = 0;
         last_received_event_status = 0;
+        active_hfp_connection = NULL;
 
         hfp_ag_deinit();
         btstack_memory_deinit();
