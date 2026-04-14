@@ -117,73 +117,40 @@ static int has_more_hfp_ag_commands(void){
     return has_more_hfp_commands(2,0);
 }
 
-
-static bool check_equal_ag_commands(const char * cmd, uint16_t value){
+static void check_equal_ag_commands(const char * cmd, uint16_t value){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
-    uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "+BVRA: %d", value);
-    if (len == 0){
-        return false;
-    }
-    if (actual_command == NULL){
-        return false;
-    }
-    bool status_succeeded = memcmp(actual_command, buffer, len) == 0u;
-    if (!status_succeeded){
-        printf("ERROR: actual HFP AG Command: \'%s\', expected \'%s\' \n", actual_command, buffer);
-    }
-    return status_succeeded;
+    uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d", cmd, value);
+    CHECK_TEXT(len != 0, "Failed to format expected HFP AG command");
+    CHECK_TEXT(actual_command != NULL, "Missing HFP AG command");
+    STRCMP_EQUAL(buffer, actual_command);
 }
 
-static bool check_equal_ag_report(hfp_voice_recognition_state_t state){
+static void check_equal_ag_report(hfp_voice_recognition_state_t state){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
     uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: 1,%d", HFP_VOICE_RECOGNITION_STATUS, state);
-    if (len == 0){
-        return false;
-    }
-    if (actual_command == NULL){
-        return false;
-    }
-    bool status_succeeded = memcmp(actual_command, buffer, len) == 0u;
-    if (!status_succeeded){
-        printf("ERROR: actual HFP AG Command: \'%s\', expected \'%s\' \n", actual_command, buffer);
-    }
-    return status_succeeded;
+    CHECK_TEXT(len != 0, "Failed to format expected HFP AG report");
+    CHECK_TEXT(actual_command != NULL, "Missing HFP AG report");
+    STRCMP_EQUAL(buffer, actual_command);
 }
 
-static bool check_equal_cmd_ok(void){
+static void check_equal_cmd_ok(void){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
     uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "OK");
-    if (len == 0){
-        return false;
-    }
-    if (actual_command == NULL){
-        return false;
-    }
-    bool status_succeeded = memcmp(actual_command, buffer, len) == 0u;
-    if (!status_succeeded){
-        printf("ERROR: actual HFP AG Command: \'%s\', expected \'%s\' \n", actual_command, buffer);
-    }
-    return status_succeeded;
+    CHECK_TEXT(len != 0, "Failed to format expected HFP AG OK response");
+    CHECK_TEXT(actual_command != NULL, "Missing HFP AG OK response");
+    STRCMP_EQUAL(buffer, actual_command);
 }
 
-static bool check_equal_cmd_error(void){
+static void check_equal_cmd_error(void){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
     uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "ERROR");
-    if (len == 0){
-        return false;
-    }
-    if (actual_command == NULL){
-        return false;
-    }
-    bool status_succeeded = memcmp(actual_command, buffer, len) == 0u;
-    if (!status_succeeded){
-        printf("ERROR: actual HFP AG Command: \'%s\', expected \'%s\' \n", actual_command, buffer);
-    }
-    return status_succeeded;
+    CHECK_TEXT(len != 0, "Failed to format expected HFP AG ERROR response");
+    CHECK_TEXT(actual_command != NULL, "Missing HFP AG ERROR response");
+    STRCMP_EQUAL(buffer, actual_command);
 }
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * event, uint16_t event_size){
