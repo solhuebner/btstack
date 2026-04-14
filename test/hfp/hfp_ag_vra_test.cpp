@@ -118,10 +118,25 @@ static int has_more_hfp_ag_commands(void){
     return has_more_hfp_commands(2,0);
 }
 
+static bool enhanced_vra_flag_supported(void){
+    if (active_hfp_connection == NULL){
+        return false;
+    }
+    bool ag_supports_enhanced_vra = (supported_features_with_codec_negotiation & (1 << HFP_AGSF_ENHANCED_VOICE_RECOGNITION_STATUS)) != 0;
+    bool hf_supports_enhanced_vra = (active_hfp_connection->remote_supported_features & (1 << HFP_HFSF_ENHANCED_VOICE_RECOGNITION_STATUS)) != 0;
+    return ag_supports_enhanced_vra && hf_supports_enhanced_vra;
+}
+
 static void check_equal_ag_commands(const char * cmd, uint16_t value){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
-    uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d", cmd, value);
+    uint16_t len;
+    if (enhanced_vra_flag_supported()){
+        CHECK_TEXT(active_hfp_connection != NULL, "Missing active HFP AG connection");
+        len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d,%d", cmd, value, active_hfp_connection->ag_vra_state);
+    } else {
+        len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d", cmd, value);
+    }
     CHECK_TEXT(len != 0, "Failed to format expected HFP AG command");
     CHECK_TEXT(actual_command != NULL, "Missing HFP AG command");
     STRCMP_EQUAL(buffer, actual_command);
@@ -130,7 +145,7 @@ static void check_equal_ag_commands(const char * cmd, uint16_t value){
 static void check_equal_ag_report(hfp_voice_recognition_state_t state){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
-    uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: 1,%d", HFP_VOICE_RECOGNITION_STATUS, state);
+    uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d,%d", HFP_VOICE_RECOGNITION_STATUS, enhanced_vra_flag_supported(), state);
     CHECK_TEXT(len != 0, "Failed to format expected HFP AG report");
     CHECK_TEXT(actual_command != NULL, "Missing HFP AG report");
     STRCMP_EQUAL(buffer, actual_command);
@@ -208,7 +223,8 @@ TEST_GROUP(HFP_AG_VRA){
         active_hfp_connection = hfp_connection;
         hfp_connection->state = HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED;
         hfp_connection->acl_handle = 0x1234;
-        hfp_connection->remote_supported_features |= (1<<HFP_AGSF_ENHANCED_VOICE_RECOGNITION_STATUS);
+        hfp_connection->remote_supported_features |= (1<<HFP_HFSF_ENHANCED_VOICE_RECOGNITION_STATUS);
+        hfp_connection->remote_supported_features |= (1<<HFP_HFSF_VOICE_RECOGNITION_TEXT);
         hfp_connection->ok_pending = 0u;
         hfp_connection->release_audio_connection = 0;
         hfp_connection->emit_vra_on_after_audio_established = 0;
