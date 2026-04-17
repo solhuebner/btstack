@@ -142,7 +142,7 @@ static void check_equal_ag_commands(const char * cmd, uint16_t value){
     STRCMP_EQUAL(buffer, actual_command);
 }
 
-static void check_equal_ag_report(hfp_voice_recognition_state_t state){
+static void check_equal_ag_report_evra_supported(hfp_voice_recognition_state_t state){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
     uint16_t len;
@@ -276,7 +276,7 @@ TEST_GROUP(HFP_AG_VRA){
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_AG_STATE);
         CHECK_EQUAL(HFP_VRA_W4_ENHANCED_ACTIVE_REPORT, hfp_connection->vra_engine_current_state);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-        check_equal_ag_report(hfp_connection->ag_vra_state);
+        check_equal_ag_report_evra_supported(hfp_connection->ag_vra_state);
         CHECK_EQUAL(HFP_VRA_ENHANCED_ACTIVE, hfp_connection->vra_engine_current_state);
         CHECK_EQUAL(HFP_SUBEVENT_ENHANCED_VOICE_RECOGNITION_AG_MESSAGE_SENT, last_received_event);
         last_received_event = 0;
@@ -287,7 +287,7 @@ TEST_GROUP(HFP_AG_VRA){
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_AG_STATE);
         CHECK_EQUAL(HFP_VRA_W4_ENHANCED_ACTIVE_REPORT, hfp_connection->vra_engine_current_state);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-        check_equal_ag_report(hfp_connection->ag_vra_state);
+        check_equal_ag_report_evra_supported(hfp_connection->ag_vra_state);
         CHECK_EQUAL(HFP_VRA_ENHANCED_ACTIVE, hfp_connection->vra_engine_current_state);
         CHECK_EQUAL(HFP_SUBEVENT_ENHANCED_VOICE_RECOGNITION_AG_MESSAGE_SENT, last_received_event);
         last_received_event = 0;
@@ -298,7 +298,7 @@ TEST_GROUP(HFP_AG_VRA){
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_AG_STATE);
         CHECK_EQUAL(HFP_VRA_W4_ENHANCED_ACTIVE_REPORT, hfp_connection->vra_engine_current_state);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-        check_equal_ag_report(hfp_connection->ag_vra_state);
+        check_equal_ag_report_evra_supported(hfp_connection->ag_vra_state);
         CHECK_EQUAL(HFP_VRA_ENHANCED_ACTIVE, hfp_connection->vra_engine_current_state);
         CHECK_EQUAL(HFP_SUBEVENT_ENHANCED_VOICE_RECOGNITION_AG_MESSAGE_SENT, last_received_event);
         last_received_event = 0;
