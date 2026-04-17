@@ -145,7 +145,8 @@ static void check_equal_ag_commands(const char * cmd, uint16_t value){
 static void check_equal_ag_report(hfp_voice_recognition_state_t state){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
-    uint16_t len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d,%d", HFP_VOICE_RECOGNITION_STATUS, enhanced_vra_flag_supported(), state);
+    uint16_t len;
+    len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: 1,%d", HFP_VOICE_RECOGNITION_STATUS, state);
     CHECK_TEXT(len != 0, "Failed to format expected HFP AG report");
     CHECK_TEXT(actual_command != NULL, "Missing HFP AG report");
     STRCMP_EQUAL(buffer, actual_command);
