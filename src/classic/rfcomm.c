@@ -1760,6 +1760,13 @@ inline static void rfcomm_channel_state_remove(rfcomm_channel_t *channel, uint32
     channel->state_var &= ~flag;
 }
 
+static void rfcomm_channel_maybe_request_initial_credits(rfcomm_channel_t * channel){
+    if (channel->state != RFCOMM_CHANNEL_DLC_SETUP) return;
+    if ((channel->state_var & RFCOMM_CHANNEL_STATE_VAR_RCVD_MSC_RSP) == 0) return;
+    if (channel->state_var & (RFCOMM_CHANNEL_STATE_VAR_SEND_CREDITS | RFCOMM_CHANNEL_STATE_VAR_SENT_CREDITS)) return;
+    rfcomm_channel_state_add(channel, RFCOMM_CHANNEL_STATE_VAR_SEND_CREDITS);
+}
+
 static int rfcomm_channel_ready_to_send(rfcomm_channel_t * channel){
     switch (channel->state){
         case RFCOMM_CHANNEL_SEND_UIH_PN:
@@ -1996,9 +2003,8 @@ static void rfcomm_channel_state_machine_with_channel(rfcomm_channel_t *channel,
                         rfcomm_send_ua(multiplexer, channel->dlci);
                     }
                     if (rfcomm_channel_ready_for_incoming_dlc_setup(channel)){
-                        log_info("Incomping setup done, requesting send MSC CMD and send Credits");
+                        log_info("Incomping setup done, requesting send MSC CMD");
                         rfcomm_channel_state_add(channel, RFCOMM_CHANNEL_STATE_VAR_SEND_MSC_CMD);
-                        rfcomm_channel_state_add(channel, RFCOMM_CHANNEL_STATE_VAR_SEND_CREDITS);
                         channel->state = RFCOMM_CHANNEL_DLC_SETUP;
                      }
                     break;
@@ -2066,7 +2072,6 @@ static void rfcomm_channel_state_machine_with_channel(rfcomm_channel_t *channel,
                 case CH_EVT_RCVD_UA:
                     channel->state = RFCOMM_CHANNEL_DLC_SETUP;
                     rfcomm_channel_state_add(channel, RFCOMM_CHANNEL_STATE_VAR_SEND_MSC_CMD);
-                    rfcomm_channel_state_add(channel, RFCOMM_CHANNEL_STATE_VAR_SEND_CREDITS);
                     break;
                 default:
                     break;
@@ -2082,6 +2087,7 @@ static void rfcomm_channel_state_machine_with_channel(rfcomm_channel_t *channel,
                     break;
                 case CH_EVT_RCVD_MSC_RSP:
                     rfcomm_channel_state_add(channel, RFCOMM_CHANNEL_STATE_VAR_RCVD_MSC_RSP);
+                    rfcomm_channel_maybe_request_initial_credits(channel);
                     break;
                     
                 case CH_EVT_READY_TO_SEND:
