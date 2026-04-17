@@ -237,7 +237,7 @@ TEST_GROUP(HFP_AG_VRA){
         CHECK_EQUAL(0, last_received_event);
     }
 
-    void test_ag_activate(void){
+    void test_ag_activate(uint8_t vra_state){
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_AG_ACTIVATE);
         CHECK_EQUAL(HFP_VRA_W4_ACTIVE, hfp_connection->vra_engine_current_state);
         CHECK_EQUAL(false, hfp_connection->emit_vra_on_after_audio_established);
@@ -245,22 +245,22 @@ TEST_GROUP(HFP_AG_VRA){
         CHECK_EQUAL(HFP_VRA_ACTIVE, hfp_connection->vra_engine_current_state);
         if (hfp_connection->state == HFP_AUDIO_CONNECTION_ESTABLISHED){
             CHECK_EQUAL(false, hfp_connection->emit_vra_on_after_audio_established);
-            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, 0);
+            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, vra_state);
             CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_ACTIVATED, last_received_event);
             last_received_event = 0;
         } else {
             CHECK_EQUAL(true, hfp_connection->emit_vra_on_after_audio_established);
-            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, 0);
+            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, vra_state);
             CHECK_EQUAL(0, last_received_event);
         }
     }
     
-    void test_ag_deactivate(void){
+    void test_ag_deactivate(uint8_t evra_state){
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_AG_DEACTIVATE);
         CHECK_EQUAL(HFP_VRA_W4_OFF, hfp_connection->vra_engine_current_state);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
         CHECK_EQUAL(HFP_VRA_OFF, hfp_connection->vra_engine_current_state);
-        check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0,0);
+        check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0, evra_state);
         CHECK_EQUAL(1, hfp_connection->release_audio_connection);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_SCO_DISCONNECTED);
         CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_DEACTIVATED, last_received_event);
@@ -325,37 +325,37 @@ TEST_GROUP(HFP_AG_VRA){
 };
 
 TEST(HFP_AG_VRA, SLC_established_HFP_VRA_OFF_test_agActivate){
-    test_ag_activate();
+    test_ag_activate(0);
 }
 
 TEST(HFP_AG_VRA, SCO_established_HFP_VRA_OFF_test_agActivate){
     test_sco_setup();
-    test_ag_activate();
+    test_ag_activate(0);
 }
 
 TEST(HFP_AG_VRA, SCO_established_HFP_VRA_OFF_test_agActivate_agDeactivate_sequence){
     test_sco_setup();
-    test_ag_activate();
-    test_ag_deactivate();
+    test_ag_activate(0);
+    test_ag_deactivate(0);
 }
 
 TEST(HFP_AG_VRA, SCO_established_HFP_VRA_OFF_test_agActivate_hfEnhanced_agDeactivate_sequence){
     test_sco_setup();
-    test_ag_activate();
+    test_ag_activate(0);
     test_hf_activate_enhanced();
-    test_ag_deactivate();
+    test_ag_deactivate(0);
 }
 
 TEST(HFP_AG_VRA, test_agActivate_hfEnhancedMsgs_agDeactivate_sequence){
     test_sco_setup();
-    test_ag_activate();
+    test_ag_activate(0);
     test_hf_activate_enhanced();
     test_ag_starting_sound_report();
     test_ag_ready_for_audio_report();
     test_hf_activate_enhanced();
-    test_ag_deactivate();
-    test_ag_activate();
-    test_ag_deactivate();
+    test_ag_deactivate(1);
+    test_ag_activate(1);
+    test_ag_deactivate(1);
 }
 
 TEST(HFP_AG_VRA, test_ready2send_HFP_VRA_W4_ACTIVE) {
