@@ -91,7 +91,7 @@ static uint8_t call_termiated = 0;
 
 static uint8_t last_received_event = 0;
 static uint8_t last_received_event_status = 0;
-static hfp_connection_t * active_hfp_connection = NULL;
+static bool evra_supported = false;
 
 // static int supported_features_with_codec_negotiation = 438;
 static int supported_features_with_codec_negotiation =
@@ -118,22 +118,18 @@ static int has_more_hfp_ag_commands(void){
     return has_more_hfp_commands(2,0);
 }
 
-static bool enhanced_vra_flag_supported(void){
-    if (active_hfp_connection == NULL){
-        return false;
-    }
+static void update_global_enhanced_vra_supported_flag(hfp_connection_t * active_hfp_connection){
     bool ag_supports_enhanced_vra = (supported_features_with_codec_negotiation & (1 << HFP_AGSF_ENHANCED_VOICE_RECOGNITION_STATUS)) != 0;
     bool hf_supports_enhanced_vra = (active_hfp_connection->remote_supported_features & (1 << HFP_HFSF_ENHANCED_VOICE_RECOGNITION_STATUS)) != 0;
-    return ag_supports_enhanced_vra && hf_supports_enhanced_vra;
+    evra_supported = ag_supports_enhanced_vra && hf_supports_enhanced_vra;
 }
 
-static void check_equal_ag_commands(const char * cmd, uint16_t value){
+static void check_equal_ag_commands(const char * cmd, uint16_t value, uint8_t ag_vra_state){
     char * actual_command = get_next_hfp_ag_command();
     char buffer[40];
     uint16_t len;
-    if (enhanced_vra_flag_supported()){
-        CHECK_TEXT(active_hfp_connection != NULL, "Missing active HFP AG connection");
-        len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d,%d", cmd, value, active_hfp_connection->ag_vra_state);
+    if (evra_supported){
+        len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d,%d", cmd, value, ag_vra_state);
     } else {
         len = btstack_snprintf_assert_complete(buffer, sizeof(buffer), "%s: %d", cmd, value);
     }
@@ -221,7 +217,6 @@ TEST_GROUP(HFP_AG_VRA){
         static bd_addr_t bd_addr = { 1,2,3,4,5,6 };
         hfp_connection = test_hfp_create_connection(bd_addr, HFP_ROLE_AG);
         btstack_assert(hfp_connection != NULL);
-        active_hfp_connection = hfp_connection;
         hfp_connection->state = HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED;
         hfp_connection->acl_handle = 0x1234;
         hfp_connection->remote_supported_features |= (1<<HFP_HFSF_ENHANCED_VOICE_RECOGNITION_STATUS);
@@ -231,6 +226,7 @@ TEST_GROUP(HFP_AG_VRA){
         hfp_connection->emit_vra_on_after_audio_established = 0;
         last_received_event_status = 0;
         last_received_event = 0;
+        update_global_enhanced_vra_supported_flag(hfp_connection);
     }
 
     void test_sco_setup(void){
@@ -249,12 +245,12 @@ TEST_GROUP(HFP_AG_VRA){
         CHECK_EQUAL(HFP_VRA_ACTIVE, hfp_connection->vra_engine_current_state);
         if (hfp_connection->state == HFP_AUDIO_CONNECTION_ESTABLISHED){
             CHECK_EQUAL(false, hfp_connection->emit_vra_on_after_audio_established);
-            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1);
+            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, 0);
             CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_ACTIVATED, last_received_event);
             last_received_event = 0;
         } else {
             CHECK_EQUAL(true, hfp_connection->emit_vra_on_after_audio_established);
-            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1);
+            check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, 0);
             CHECK_EQUAL(0, last_received_event);
         }
     }
@@ -264,7 +260,7 @@ TEST_GROUP(HFP_AG_VRA){
         CHECK_EQUAL(HFP_VRA_W4_OFF, hfp_connection->vra_engine_current_state);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
         CHECK_EQUAL(HFP_VRA_OFF, hfp_connection->vra_engine_current_state);
-        check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0);
+        check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0,0);
         CHECK_EQUAL(1, hfp_connection->release_audio_connection);
         test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_SCO_DISCONNECTED);
         CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_DEACTIVATED, last_received_event);
@@ -322,7 +318,6 @@ TEST_GROUP(HFP_AG_VRA){
         audio_connection_established = 0;
         last_received_event = 0;
         last_received_event_status = 0;
-        active_hfp_connection = NULL;
 
         hfp_ag_deinit();
         btstack_memory_deinit();
@@ -367,7 +362,7 @@ TEST(HFP_AG_VRA, test_ready2send_HFP_VRA_W4_ACTIVE) {
     hfp_connection->state = HFP_AUDIO_CONNECTION_ESTABLISHED;
     hfp_connection->vra_engine_current_state = HFP_VRA_W4_ACTIVE;
     test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1);
+    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, 0);
     CHECK_EQUAL(HFP_VRA_ACTIVE, hfp_connection->vra_engine_current_state);
     CHECK_EQUAL(false, hfp_connection->emit_vra_on_after_audio_established);
     CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_ACTIVATED, last_received_event);
@@ -376,7 +371,7 @@ TEST(HFP_AG_VRA, test_ready2send_HFP_VRA_W4_ACTIVE) {
     hfp_connection->state = HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED;
     hfp_connection->vra_engine_current_state = HFP_VRA_W4_ACTIVE;
     test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1);
+    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 1, 0);
     CHECK_EQUAL(HFP_VRA_ACTIVE, hfp_connection->vra_engine_current_state);
     CHECK_EQUAL(true, hfp_connection->emit_vra_on_after_audio_established);
     CHECK_EQUAL(0, last_received_event);
@@ -424,7 +419,7 @@ TEST(HFP_AG_VRA, test_ready2send_HFP_VRA_W4_OFF) {
     hfp_connection->state = HFP_AUDIO_CONNECTION_ESTABLISHED;
     hfp_connection->vra_engine_current_state = HFP_VRA_W4_OFF;
     test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0);
+    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0, 0);
     CHECK_EQUAL(HFP_VRA_OFF, hfp_connection->vra_engine_current_state);
     CHECK_EQUAL(1, hfp_connection->release_audio_connection);
     CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_DEACTIVATED, last_received_event);
@@ -433,7 +428,7 @@ TEST(HFP_AG_VRA, test_ready2send_HFP_VRA_W4_OFF) {
     hfp_connection->state = HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED;
     hfp_connection->vra_engine_current_state = HFP_VRA_W4_OFF;
     test_hfp_ag_vra_state_machine(hfp_connection, HFP_AG_VRA_EVENT_CAN_SEND_NOW);
-    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0);
+    check_equal_ag_commands(HFP_VOICE_RECOGNITION_STATUS, 0, 0);
     CHECK_EQUAL(HFP_VRA_OFF, hfp_connection->vra_engine_current_state);
     CHECK_EQUAL(0, hfp_connection->release_audio_connection);
     CHECK_EQUAL(HFP_SUBEVENT_VOICE_RECOGNITION_DEACTIVATED, last_received_event);
