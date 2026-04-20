@@ -42,8 +42,27 @@
  *
  * Using this wrapper can be helpful in debugging issues that magically disappear when HCI logging is turned on.
  *
-* By logging first into a buffer, the critical steps should run mostly as before but still
+ * By logging first into a buffer, the critical steps should run mostly as before but still
  * provide an HCI log of the issue afterwards.
+ *
+ * Example Usage with 10kB buffer and flush after 100 ms inactivity
+ *
+ *   Existing code:
+ *
+ *     const hci_dump_t * hci_dump_impl = hci_dump_embedded_stdout_get_instance();
+ *     hci_dump_init(hci_dump_impl);
+ *
+ *   Buffered version:
+ *
+ *     static byte_t hci_dump_buffer[10000] = {0};
+ *
+ *     const hci_dump_t * hci_dump_impl = hci_dump_embedded_stdout_get_instance();
+ *     const hci_dump_t * hci_dump_buffered = hci_dump_buffered_init(hci_dump_impl,
+ *                                    hci_dump_buffer,
+ *                                    sizeof(hci_dump_buffer),
+ *                                    100);
+ *     hci_dump_init(hci_dump_buffered);
+ *
  */
 
 #ifndef HCI_DUMP_BUFFERED_H
